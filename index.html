@@ -342,6 +342,107 @@ body {
 .notes-ta:focus { border-color: var(--red-dim); }
 .notes-ta::placeholder { color: var(--text-dim); }
 
+/* ── 24HR WEEKLY VIEW ── */
+.week24-wrap {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 420px;
+  position: relative;
+}
+.week24-grid {
+  display: grid;
+  grid-template-columns: 44px repeat(7, 1fr);
+  min-width: 600px;
+  position: relative;
+}
+.week24-header {
+  display: contents;
+}
+.week24-corner {
+  background: var(--panel);
+  position: sticky; top: 0; left: 0;
+  z-index: 4;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.week24-day-head {
+  background: var(--panel);
+  position: sticky; top: 0;
+  z-index: 3;
+  text-align: center;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.week24-day-head.today { background: var(--red); }
+.week24-day-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.week24-day-head.today .week24-day-name { color: #ffcccc; }
+.week24-day-num {
+  font-size: 15px; font-weight: 900;
+  color: var(--text-mid);
+  line-height: 1.1;
+}
+.week24-day-head.today .week24-day-num { color: white; }
+.week24-time-col {
+  position: sticky; left: 0;
+  z-index: 2;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+.week24-time-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  text-align: right;
+  padding: 0 6px 0 2px;
+  height: 40px;
+  display: flex; align-items: flex-start;
+  padding-top: 2px;
+  border-bottom: 1px solid var(--border);
+}
+.week24-cell {
+  height: 40px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.week24-cell.half-hour { border-bottom: 1px dashed #3d1c1c55; }
+.week24-event {
+  position: absolute;
+  left: 2px; right: 2px;
+  border-radius: 5px;
+  padding: 2px 4px;
+  font-size: 9px;
+  font-weight: 700;
+  overflow: hidden;
+  z-index: 2;
+  line-height: 1.3;
+  cursor: default;
+  min-height: 14px;
+  border-left: 3px solid;
+}
+.week24-now-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--red);
+  z-index: 5;
+  pointer-events: none;
+}
+.week24-now-dot {
+  position: absolute;
+  left: -4px; top: -4px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 6px #e8354a88;
+}
+
 /* ── QUICK LINKS ── */
 .links-grid {
   display: grid;
@@ -411,7 +512,7 @@ body {
   transition: all 0.15s;
 }
 .icon-opt:hover, .icon-opt.selected { border-color: var(--red); background: #e8354a22; }
-.color-picker-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.color-picker-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; align-items: center; }
 .color-opt {
   width: 28px; height: 28px;
   border-radius: 50%;
@@ -420,6 +521,34 @@ body {
   transition: all 0.15s;
 }
 .color-opt:hover, .color-opt.selected { border-color: white; transform: scale(1.15); }
+.hex-color-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 36px; height: 36px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  padding: 2px;
+  transition: border-color 0.2s;
+}
+.hex-color-input:hover { border-color: var(--text-dim); }
+.hex-color-input::-webkit-color-swatch-wrapper { padding: 0; border-radius: 6px; }
+.hex-color-input::-webkit-color-swatch { border: none; border-radius: 6px; }
+.hex-text-input {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  width: 90px;
+  outline: none;
+  text-transform: uppercase;
+  transition: border-color 0.2s;
+}
+.hex-text-input:focus { border-color: var(--red-dim); }
 
 /* ── POMODORO ── */
 .pomo-tab { font-family: 'Share Tech Mono', monospace; font-size: 10px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel2); color: var(--text-dim); cursor: pointer; transition: all 0.2s; letter-spacing: 0.04em; }
@@ -547,9 +676,9 @@ body {
     <!-- HERO (always on top, not draggable) -->
     <div class="hero" style="margin-bottom:16px">
       <div>
-        <div style="font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px">NEXUS STUDENT OS</div>
-        <div class="hero-name">Student Dashboard</div>
-        <div class="hero-sub">Mech Eng · Semester Break 2026</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px">NEXUS OS</div>
+        <div class="hero-name">FML Hub</div>
+        <div class="hero-sub">Mech Eng · Sem Break 2026</div>
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="hero-stat-val" id="stat-events">—</div><div class="hero-stat-lbl">TODAY</div></div>
@@ -591,9 +720,19 @@ body {
           <div class="setup-step"><span class="step-num">2.</span><span class="step-text">Click your calendar name in the left sidebar → <strong style="color:var(--green)">Integrate calendar</strong></span></div>
           <div class="setup-step"><span class="step-num">3.</span><span class="step-text">Copy the <strong style="color:var(--green)">Secret address in iCal format</strong> link (starts with <code>https://calendar.google.com/calendar/ical/...</code>)</span></div>
           <div class="setup-step"><span class="step-num">4.</span><span class="step-text">Paste it below and click Load — done, no login required</span></div>
-          <div class="input-row" style="margin-top:10px"><label class="input-label">ICAL URL</label><input class="cp-input" id="gcal-ical-url" placeholder="https://calendar.google.com/calendar/ical/..."/></div>
+          <div style="font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:0.06em;margin-bottom:6px">ADD CALENDARS (one per line or add multiple)</div>
+          <div id="gcal-ical-list" style="margin-bottom:8px"></div>
+          <div class="input-row"><label class="input-label">ICAL URL</label>
+            <div style="display:flex;gap:6px">
+              <input class="cp-input" id="gcal-ical-url" placeholder="https://calendar.google.com/calendar/ical/..."/>
+              <input class="cp-input" id="gcal-ical-name" placeholder="Name" style="width:110px"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:4px">
+            <div id="gcal-color-picker" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+          </div>
           <div class="btn-row">
-            <button class="btn-red" onclick="loadCalendarIcal()">Load iCal Calendar</button>
+            <button class="btn-red" onclick="addCalendarFeed()">Add Calendar</button>
             <button class="btn-ghost" onclick="loadDemoCalendar()">Load Demo Data</button>
           </div>
         </div>
@@ -612,16 +751,29 @@ body {
       </div>
       <div class="modal-section" id="section-canvas">
         <div class="modal-section-title" style="color:var(--purple)">🎓 Canvas LMS</div>
-        <div class="setup-step"><span class="step-num">1.</span><span class="step-text">Canvas → Profile → Settings → <strong style="color:var(--purple)">Approved Integrations → New Access Token</strong></span></div>
-        <div class="setup-step"><span class="step-num">2.</span><span class="step-text">Copy your token + your Canvas domain e.g. <code>canvas.myuni.edu.au</code></span></div>
-        <div class="setup-step"><span class="step-num">3.</span><span class="step-text"><strong style="color:var(--gold)">⚠</strong> If CORS fails, try the <code>npx cors-anywhere</code> workaround</span></div>
-        <div class="input-row"><label class="input-label">CANVAS DOMAIN</label><input class="cp-input" id="canvas-domain" placeholder="canvas.myuniversity.edu.au"/></div>
-        <div class="input-row"><label class="input-label">ACCESS TOKEN</label><input class="cp-input" id="canvas-token" type="password" placeholder="paste token here"/></div>
-        <div class="btn-row">
-          <button class="btn-red" onclick="connectCanvas()">Connect Canvas</button>
-          <button class="btn-ghost" onclick="loadDemoCanvas()">Load Demo Data</button>
+
+        <div style="background:var(--panel2);border:1px solid #a78bfa44;border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:800;color:var(--purple);margin-bottom:8px;letter-spacing:0.06em">✓ OPTION A — iCal Feed (easiest)</div>
+          <div class="setup-step"><span class="step-num">1.</span><span class="step-text">Log into Canvas → click <strong style="color:var(--text)">Calendar</strong> in the left sidebar</span></div>
+          <div class="setup-step"><span class="step-num">2.</span><span class="step-text">Scroll to the bottom right → click <strong style="color:var(--purple)">Calendar Feed</strong></span></div>
+          <div class="setup-step"><span class="step-num">3.</span><span class="step-text">Copy the URL and paste below — includes all assignment due dates</span></div>
+          <div class="input-row" style="margin-top:10px"><label class="input-label">CANVAS ICAL URL</label><input class="cp-input" id="canvas-ical-url" placeholder="https://canvas.instructure.com/feeds/calendars/..."/></div>
+          <div class="btn-row">
+            <button class="btn-red" onclick="loadCanvasIcal()">Load Canvas Feed</button>
+            <button class="btn-ghost" onclick="loadDemoCanvas()">Load Demo Data</button>
+          </div>
         </div>
-        <div id="canvas-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:8px"></div>
+
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div style="font-size:11px;font-weight:800;color:var(--text-dim);margin-bottom:8px;letter-spacing:0.06em">OPTION B — API Token</div>
+          <div class="setup-step"><span class="step-num">1.</span><span class="step-text">Canvas → Profile → Settings → <strong style="color:var(--purple)">Approved Integrations → New Access Token</strong></span></div>
+          <div class="setup-step"><span class="step-num">2.</span><span class="step-text">Copy your token + Canvas domain e.g. <code>canvas.myuni.edu.au</code></span></div>
+          <div class="input-row" style="margin-top:8px"><label class="input-label">CANVAS DOMAIN</label><input class="cp-input" id="canvas-domain" placeholder="canvas.myuniversity.edu.au"/></div>
+          <div class="input-row"><label class="input-label">ACCESS TOKEN</label><input class="cp-input" id="canvas-token" type="password" placeholder="paste token here"/></div>
+          <div class="btn-row"><button class="btn-ghost" onclick="connectCanvas()">Connect via API</button></div>
+        </div>
+
+        <div id="canvas-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:10px"></div>
       </div>
       <div class="modal-section" id="section-roster">
         <div class="modal-section-title" style="color:var(--gold)">⏰ Work Roster</div>
@@ -646,8 +798,8 @@ body {
 // ─── PANEL DEFINITIONS ────────────────────────────────────────────────────────
 // Each panel has: id, title, defaultSpan (1/2/3), render function name
 const PANEL_DEFS = [
-  { id: 'panel-week',  title: '📅 This Week',           defaultSpan: 3 },
-  { id: 'panel-cal',  title: '📅 Google Calendar',      defaultSpan: 1 },
+  { id: 'panel-week',  title: '🗓 Weekly View',          defaultSpan: 3 },
+  { id: 'panel-cal',  title: '📅 Calendars',             defaultSpan: 1 },
   { id: 'panel-uni',  title: '🎓 Canvas',               defaultSpan: 1 },
   { id: 'panel-work', title: '⏰ Work Roster',           defaultSpan: 1 },
   { id: 'panel-pomo', title: '🍅 Pomodoro',             defaultSpan: 2 },
@@ -772,12 +924,12 @@ function buildPanelHTML(id, title) {
     'panel-notes': `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">AUTO-SAVE</span>`,
     'panel-tax':   `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">SA · TFT TOGGLE</span>`,
     'panel-pomo':  `<span id="pomo-session-label" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">FOCUS SESSION</span>`,
-    'panel-week':  `<span id="week-range" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)"></span>`,
+    'panel-week':  `<div style="display:flex;gap:8px;align-items:center"><button class="btn-ghost" onclick="shiftWeek(-1)" style="padding:4px 10px;font-size:12px">‹</button><span id="week-range" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)"></span><button class="btn-ghost" onclick="shiftWeek(1)" style="padding:4px 10px;font-size:12px">›</button><button class="btn-ghost" onclick="shiftWeek(0)" style="padding:4px 8px;font-size:10px">Today</button></div>`,
     'panel-links': `<button class="connect-pill green" onclick="openLinksModal()">+ Add Link</button>`,
   };
 
   const bodyMap = {
-    'panel-week': `<div class="week-strip" id="week-grid"></div>`,
+    'panel-week': buildWeekViewHTML(),
     'panel-cal': `<div id="gcal-body"><div class="empty"><span class="empty-icon">📅</span>Not connected<div style="margin-top:10px"><button class="connect-pill red" onclick="openSetup('gcal')">Connect Google</button></div></div></div>`,
     'panel-uni': `<div id="canvas-body"><div class="empty"><span class="empty-icon">🎓</span>Not connected<div style="margin-top:10px"><button class="connect-pill purple" onclick="openSetup('canvas')">Connect Canvas</button></div></div></div>`,
     'panel-work': `<div id="roster-body"><div class="empty"><span class="empty-icon">⏰</span>No shifts added<div style="margin-top:10px"><button class="connect-pill gold" onclick="openSetup('roster')">Add Shifts</button></div></div></div>`,
@@ -896,7 +1048,11 @@ function initPanelLogic() {
   if (savedDomain && document.getElementById('canvas-domain')) document.getElementById('canvas-domain').value = savedDomain;
   if (savedToken  && document.getElementById('canvas-token'))  document.getElementById('canvas-token').value  = savedToken;
   // Re-render data if already loaded
-  renderCalendar(); renderCanvas(); renderRoster(); renderLinks();
+  renderCalendar(); renderCanvas(); renderRoster(); renderLinks(); renderWeek24();
+  renderCalFeedList(); renderGcalColorPicker();
+  // Restore canvas ical url
+  const savedCanvasIcal = localStorage.getItem('nexus_canvas_ical');
+  if (savedCanvasIcal && document.getElementById('canvas-ical-url')) document.getElementById('canvas-ical-url').value = savedCanvasIcal;
   // Tax
   renderTaxJobs();
   // Pomo
@@ -931,10 +1087,10 @@ function onDrop(e) {
   const [removed] = layout.splice(srcIdx, 1);
   layout.splice(tgtIdx, 0, removed);
   saveLayout();
-  // Restore saved ical url
-const savedIcal = localStorage.getItem('nexus_gcal_ical');
-if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
-
+  // Restore cal feeds on load
+if (calFeeds.length) {
+  S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+}
 renderGrid();
 }
 function onDragEnd() {
@@ -959,38 +1115,38 @@ function toggleEditMode() {
 
 function setSpan(id, span) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.span = span; saveLayout(); // Restore saved ical url
-const savedIcal = localStorage.getItem('nexus_gcal_ical');
-if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
-
+  if (item) { item.span = span; saveLayout(); // Restore cal feeds on load
+if (calFeeds.length) {
+  S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+}
 renderGrid(); }
 }
 
 function hidePanel(id) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.hidden = true; saveLayout(); // Restore saved ical url
-const savedIcal = localStorage.getItem('nexus_gcal_ical');
-if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
-
+  if (item) { item.hidden = true; saveLayout(); // Restore cal feeds on load
+if (calFeeds.length) {
+  S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+}
 renderGrid(); }
 }
 
 function restorePanel(id) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.hidden = false; saveLayout(); // Restore saved ical url
-const savedIcal = localStorage.getItem('nexus_gcal_ical');
-if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
-
+  if (item) { item.hidden = false; saveLayout(); // Restore cal feeds on load
+if (calFeeds.length) {
+  S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+}
 renderGrid(); }
 }
 
 function resetLayout() {
   layout = DEFAULT_LAYOUT.map(l => ({...l}));
   saveLayout();
-  // Restore saved ical url
-const savedIcal = localStorage.getItem('nexus_gcal_ical');
-if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
-
+  // Restore cal feeds on load
+if (calFeeds.length) {
+  S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+}
 renderGrid();
 }
 
@@ -1017,8 +1173,279 @@ function scrollToPanel(id) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// ─── CALENDAR FEEDS (multi-calendar) ─────────────────────────────────────────
+const CAL_PALETTE = ['#e8354a','#60a5fa','#4ade80','#a78bfa','#e8b84b','#f97316','#ec4899','#14b8a6','#ef4444','#8b5cf6'];
+let calFeeds = JSON.parse(localStorage.getItem('nexus_cal_feeds') || '[]');
+let weekOffset = 0; // weeks from current
+
+function saveCalFeeds() { localStorage.setItem('nexus_cal_feeds', JSON.stringify(calFeeds)); }
+
+function renderCalFeedList() {
+  const el = document.getElementById('gcal-ical-list');
+  if (!el) return;
+  if (!calFeeds.length) { el.innerHTML = ''; return; }
+  el.innerHTML = calFeeds.map((f,i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--panel3);border-radius:8px;margin-bottom:4px">
+      <div style="width:10px;height:10px;border-radius:50%;background:${f.color};flex-shrink:0"></div>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-mid);flex:1">${f.name}</span>
+      <button onclick="removeCalFeed(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:0 4px">✕</button>
+    </div>`).join('');
+}
+
+function removeCalFeed(i) {
+  calFeeds.splice(i,1); saveCalFeeds();
+  // Rebuild events from remaining feeds
+  S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+  localStorage.setItem('nexus_events', JSON.stringify(S.calEvents));
+  renderCalFeedList(); renderCalendar(); renderWeek24(); buildWeekGrid(); updateStats();
+}
+
+let selectedGcalColor = CAL_PALETTE[0];
+function renderGcalColorPicker() {
+  const el = document.getElementById('gcal-color-picker'); if (!el) return;
+  el.innerHTML = `
+    <input type="color" class="hex-color-input" id="gcal-hex-picker" value="${selectedGcalColor}"
+      oninput="onGcalColorChange(this.value)" onchange="onGcalColorChange(this.value)"/>
+    <input type="text" class="hex-text-input" id="gcal-hex-text" value="${selectedGcalColor.toUpperCase()}"
+      oninput="onGcalHexText(this.value)" maxlength="7" placeholder="#60A5FA"/>
+    <div style="width:28px;height:28px;border-radius:50%;background:${selectedGcalColor};border:2px solid var(--border)" id="gcal-color-preview"></div>
+    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">calendar colour</span>
+  `;
+}
+
+function onGcalColorChange(val) {
+  selectedGcalColor = val;
+  const txt = document.getElementById('gcal-hex-text'); if (txt) txt.value = val.toUpperCase();
+  const prev = document.getElementById('gcal-color-preview'); if (prev) prev.style.background = val;
+}
+
+function onGcalHexText(val) {
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    selectedGcalColor = val;
+    const picker = document.getElementById('gcal-hex-picker'); if (picker) picker.value = val;
+    const prev = document.getElementById('gcal-color-preview'); if (prev) prev.style.background = val;
+  }
+}
+
+async function addCalendarFeed() {
+  const url = document.getElementById('gcal-ical-url').value.trim();
+  const name = document.getElementById('gcal-ical-name').value.trim() || 'Calendar ' + (calFeeds.length+1);
+  const fb = document.getElementById('gcal-feedback');
+  if (!url) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Paste an iCal URL first'; return; }
+  fb.style.color='var(--blue)'; fb.textContent=`⏳ Loading ${name}...`;
+  const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+  try {
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    if (!text.includes('BEGIN:VCALENDAR')) throw new Error('Not a valid iCal feed');
+    const events = parseIcal(text);
+    // Remove existing feed with same url if re-adding
+    const existing = calFeeds.findIndex(f => f.url === url);
+    const feed = { url, name, color: selectedGcalColor, events };
+    if (existing >= 0) calFeeds[existing] = feed; else calFeeds.push(feed);
+    saveCalFeeds();
+    // Rebuild combined events
+    S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+    localStorage.setItem('nexus_events', JSON.stringify(S.calEvents));
+    fb.style.color='var(--green)'; fb.textContent=`✓ ${name}: loaded ${events.length} events`;
+    document.getElementById('gcal-ical-url').value = '';
+    document.getElementById('gcal-ical-name').value = '';
+    selectedGcalColor = CAL_PALETTE[calFeeds.length % CAL_PALETTE.length];
+    renderCalFeedList(); renderGcalColorPicker(); renderCalendar(); renderWeek24(); buildWeekGrid(); updateStats();
+  } catch(e) {
+    fb.style.color='var(--red-soft)'; fb.textContent='✕ ' + e.message;
+  }
+}
+
+// ─── CANVAS ICAL ──────────────────────────────────────────────────────────────
+async function loadCanvasIcal() {
+  const url = document.getElementById('canvas-ical-url').value.trim();
+  const fb  = document.getElementById('canvas-feedback');
+  if (!url) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Paste your Canvas iCal URL'; return; }
+  fb.style.color='var(--purple)'; fb.textContent='⏳ Loading Canvas feed...';
+  const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+  try {
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    if (!text.includes('BEGIN:VCALENDAR')) throw new Error('Not a valid iCal feed — check your URL');
+    // Parse all events, filter to those with assignments (Canvas uses SUMMARY for assignment names)
+    const allEvents = parseIcal(text);
+    // Canvas iCal: assignments show up with due date as DTSTART
+    // Extract unique assignment info
+    S.assignments = allEvents
+      .filter(e => e.date && e.title)
+      .map(e => ({
+        name: e.title.replace(/\s*\[.*?\]\s*/g,'').trim(),
+        course: extractCanvasCourse(e.title),
+        due: e.date,
+        points: null,
+        time: e.time || null,
+      }))
+      .filter((a,i,arr) => arr.findIndex(x => x.name===a.name && x.due===a.due) === i)
+      .sort((a,b) => a.due.localeCompare(b.due));
+    localStorage.setItem('nexus_assignments', JSON.stringify(S.assignments));
+    localStorage.setItem('nexus_canvas_ical', url);
+    fb.style.color='var(--green)'; fb.textContent=`✓ Loaded ${S.assignments.length} assignments from Canvas`;
+    renderCanvas(); buildWeekGrid(); updateStats();
+  } catch(e) {
+    fb.style.color='var(--red-soft)'; fb.textContent='✕ ' + e.message;
+  }
+}
+
+function extractCanvasCourse(title) {
+  // Canvas often includes course name in brackets e.g. "Assignment Name [MECH1201]"
+  const match = title.match(/\[([^\]]+)\]/);
+  return match ? match[1] : 'Canvas';
+}
+
+// ─── 24HR WEEKLY VIEW ────────────────────────────────────────────────────────
+const HOUR_START = 7;  // 7am
+const HOUR_END   = 23; // 11pm
+const HOUR_PX    = 40; // px per hour
+
+function buildWeekViewHTML() {
+  return `<div class="week24-wrap" id="week24-wrap"><div class="week24-grid" id="week24-grid"></div></div>`;
+}
+
+function shiftWeek(dir) {
+  if (dir === 0) weekOffset = 0;
+  else weekOffset += dir;
+  renderWeek24();
+}
+
+function renderWeek24() {
+  const grid = document.getElementById('week24-grid');
+  if (!grid) return;
+
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate() + weekOffset * 7);
+  const dow = baseDate.getDay();
+  const mon = new Date(baseDate); mon.setDate(baseDate.getDate() - ((dow+6)%7));
+  const days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  const today = new Date().toISOString().split('T')[0];
+
+  // Build week days
+  const weekDays = Array.from({length:7}, (_,i) => {
+    const d = new Date(mon); d.setDate(mon.getDate()+i);
+    return { d, dateStr: d.toISOString().split('T')[0], label: days[i], isToday: d.toISOString().split('T')[0] === today };
+  });
+
+  // Update week range
+  const wr = document.getElementById('week-range');
+  if (wr) wr.textContent = `${weekDays[0].d.toLocaleDateString('en-AU',{day:'2-digit',month:'short'})} — ${weekDays[6].d.toLocaleDateString('en-AU',{day:'2-digit',month:'short'})}`;
+
+  const hours = HOUR_END - HOUR_START;
+  const totalPx = hours * HOUR_PX;
+
+  // Build HTML
+  let html = '';
+  // Header row
+  html += '<div class="week24-corner" style="grid-column:1;grid-row:1"></div>';
+  weekDays.forEach((day,i) => {
+    html += `<div class="week24-day-head${day.isToday?' today':''}" style="grid-column:${i+2};grid-row:1">
+      <div class="week24-day-name">${day.label}</div>
+      <div class="week24-day-num">${day.d.getDate()}</div>
+    </div>`;
+  });
+
+  // Time rows + cells
+  for (let h = HOUR_START; h < HOUR_END; h++) {
+    const row = h - HOUR_START + 2;
+    html += `<div class="week24-time-label" style="grid-column:1;grid-row:${row}">${String(h).padStart(2,'0')}:00</div>`;
+    for (let d = 0; d < 7; d++) {
+      html += `<div class="week24-cell" style="grid-column:${d+2};grid-row:${row}"></div>`;
+    }
+  }
+  grid.innerHTML = html;
+
+  // Now overlay events as absolutely positioned elements per day column
+  // We need to position them relative to the column div
+  // Use a wrapper approach: after setting innerHTML, add events per column
+  weekDays.forEach((day, di) => {
+    const colEvents = [];
+
+    // Calendar events with time
+    S.calEvents.filter(e => e.date === day.dateStr && e.time).forEach(e => {
+      colEvents.push({ title: e.title, time: e.time, endTime: e.endTime || null, color: e.calColor || '#60a5fa', type: 'cal' });
+    });
+
+    // Shifts
+    S.shifts.filter(s => s.date === day.dateStr).forEach(s => {
+      colEvents.push({ title: 'Work shift', time: s.start, endTime: s.end, color: '#e8b84b', type: 'work' });
+    });
+
+    // Assignments due (show as dot at top of day)
+    S.assignments.filter(a => a.due === day.dateStr).forEach(a => {
+      colEvents.push({ title: a.name, time: a.time || '08:00', endTime: null, color: '#a78bfa', type: 'uni' });
+    });
+
+    if (!colEvents.length) return;
+
+    // Get the cell for this column and first hour to use as anchor
+    const firstCell = grid.querySelector(`[style*="grid-column:${di+2}"][style*="grid-row:2"]`);
+    if (!firstCell) return;
+
+    // Create a column overlay div
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:absolute;top:0;left:0;right:0;pointer-events:none;`;
+
+    colEvents.forEach(ev => {
+      const [sh,sm] = ev.time.split(':').map(Number);
+      const startH = sh + sm/60;
+      if (startH < HOUR_START || startH >= HOUR_END) return;
+      const topPx = (startH - HOUR_START) * HOUR_PX;
+
+      let heightPx = HOUR_PX * 0.8; // default 48min block
+      if (ev.endTime) {
+        const [eh,em] = ev.endTime.split(':').map(Number);
+        const endH = Math.min(eh + em/60, HOUR_END);
+        heightPx = Math.max((endH - startH) * HOUR_PX, 16);
+      }
+
+      const bg = ev.color + '22';
+      const evEl = document.createElement('div');
+      evEl.className = 'week24-event';
+      evEl.style.cssText = `top:${topPx}px;height:${heightPx}px;background:${bg};border-left-color:${ev.color};color:var(--white);`;
+      evEl.title = `${ev.title} ${ev.time}${ev.endTime?' → '+ev.endTime:''}`;
+      evEl.textContent = ev.title;
+      overlay.appendChild(evEl);
+    });
+
+    // Attach overlay relative to the column cells
+    // Find the column container by placing it on the first cell's parent
+    firstCell.style.position = 'relative';
+    firstCell.appendChild(overlay);
+    overlay.style.cssText = `position:absolute;top:0;left:0;right:0;height:${totalPx}px;pointer-events:none;z-index:1;`;
+  });
+
+  // Now-line (only for current week)
+  if (weekOffset === 0) {
+    const now = new Date();
+    const nowH = now.getHours() + now.getMinutes()/60;
+    if (nowH >= HOUR_START && nowH < HOUR_END) {
+      const topPx = (nowH - HOUR_START) * HOUR_PX;
+      const todayIdx = weekDays.findIndex(d => d.isToday);
+      if (todayIdx >= 0) {
+        const cell = grid.querySelector(`[style*="grid-column:${todayIdx+2}"][style*="grid-row:2"]`);
+        if (cell) {
+          const nowLine = document.createElement('div');
+          nowLine.className = 'week24-now-line';
+          nowLine.style.top = topPx + 'px';
+          const dot = document.createElement('div');
+          dot.className = 'week24-now-dot';
+          nowLine.appendChild(dot);
+          cell.appendChild(nowLine);
+        }
+      }
+    }
+  }
+}
+
 // ─── WEEK GRID ────────────────────────────────────────────────────────────────
-function buildWeekGrid() {
+function buildWeekGrid() { renderWeek24(); return; }
+function buildWeekGridPips() {
   const grid = document.getElementById('week-grid');
   if (!grid) return;
   const today = new Date();
@@ -1103,7 +1530,8 @@ function parseIcal(text) {
   return events.map(e => ({ ...e, type: 'normal' }));
 }
 
-async function loadCalendarIcal() {
+async function loadCalendarIcal() { return addCalendarFeed(); }
+async function _oldLoadCalendarIcal_unused() {
   const url = document.getElementById('gcal-ical-url').value.trim();
   const fb  = document.getElementById('gcal-feedback');
   if (!url) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Paste your iCal URL first'; return; }
@@ -1397,15 +1825,30 @@ function selectIcon(i, emoji) {
 }
 
 function renderColorPicker() {
-  document.getElementById('link-color-picker').innerHTML = PRESET_COLORS.map((col, i) =>
-    `<div class="color-opt${i===selectedColorIdx?' selected':''}" style="background:${col}" onclick="selectColor(${i},'${col}')"></div>`
-  ).join('');
+  document.getElementById('link-color-picker').innerHTML = `
+    <input type="color" class="hex-color-input" id="link-hex-picker" value="${linkDraft.color || '#e8354a'}"
+      oninput="onLinkColorChange(this.value)" onchange="onLinkColorChange(this.value)"/>
+    <input type="text" class="hex-text-input" id="link-hex-text" value="${(linkDraft.color || '#e8354a').toUpperCase()}"
+      oninput="onLinkHexText(this.value)" maxlength="7" placeholder="#E8354A"/>
+    <div style="width:28px;height:28px;border-radius:50%;background:${linkDraft.color || '#e8354a'};border:2px solid var(--border)" id="link-color-preview"></div>
+  `;
 }
 
-function selectColor(i, col) {
-  selectedColorIdx = i; linkDraft.color = col;
-  renderColorPicker();
+function onLinkColorChange(val) {
+  linkDraft.color = val;
+  const txt = document.getElementById('link-hex-text'); if (txt) txt.value = val.toUpperCase();
+  const prev = document.getElementById('link-color-preview'); if (prev) prev.style.background = val;
 }
+
+function onLinkHexText(val) {
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    linkDraft.color = val;
+    const picker = document.getElementById('link-hex-picker'); if (picker) picker.value = val;
+    const prev = document.getElementById('link-color-preview'); if (prev) prev.style.background = val;
+  }
+}
+
+function selectColor(i, col) { linkDraft.color = col; renderColorPicker(); }
 
 function handleIconUpload(input) {
   const file = input.files[0];
@@ -1488,10 +1931,10 @@ function resetPomo(){clearInterval(pomoState.interval);pomoState.running=false;c
 function skipPomo(){clearInterval(pomoState.interval);pomoState.running=false;onPomoComplete();}
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-// Restore saved ical url
-const savedIcal = localStorage.getItem('nexus_gcal_ical');
-if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
-
+// Restore cal feeds on load
+if (calFeeds.length) {
+  S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+}
 renderGrid();
 </script>
 <!-- LINKS MODAL -->
@@ -1527,7 +1970,7 @@ renderGrid();
       <img id="link-img-preview" style="display:none;width:44px;height:44px;border-radius:10px;object-fit:cover;margin-bottom:10px;border:1px solid var(--border)"/>
 
       <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.08em;margin-bottom:6px">ICON BACKGROUND COLOUR</div>
-      <div class="color-picker-row" id="link-color-picker"></div>
+      <div class="color-picker-row" id="link-color-picker" style="align-items:center"></div>
 
       <div id="link-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;margin:8px 0;min-height:16px"></div>
       <div class="btn-row">
