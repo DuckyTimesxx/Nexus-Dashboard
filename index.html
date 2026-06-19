@@ -689,6 +689,11 @@ body {
       </div>
     </div>
 
+    <!-- WEEK PILL STRIP (fixed, always visible, not a module) -->
+    <div style="margin-bottom:16px">
+      <div class="week-strip" id="week-grid"></div>
+    </div>
+
     <!-- MODULAR GRID -->
     <div class="module-grid" id="module-grid">
       <!-- panels injected by JS -->
@@ -798,8 +803,7 @@ body {
 // ─── PANEL DEFINITIONS ────────────────────────────────────────────────────────
 // Each panel has: id, title, defaultSpan (1/2/3), render function name
 const PANEL_DEFS = [
-  { id: 'panel-week',  title: '🗓 Weekly View',          defaultSpan: 3 },
-  { id: 'panel-cal',  title: '📅 Calendars',             defaultSpan: 1 },
+  { id: 'panel-cal',  title: '📅 Calendars',              defaultSpan: 3 },
   { id: 'panel-uni',  title: '🎓 Canvas',               defaultSpan: 1 },
   { id: 'panel-work', title: '⏰ Work Roster',           defaultSpan: 1 },
   { id: 'panel-pomo', title: '🍅 Pomodoro',             defaultSpan: 2 },
@@ -918,19 +922,17 @@ function renderGrid() {
 
 function buildPanelHTML(id, title) {
   const actionMap = {
-    'panel-cal':   `<span id="gcal-status-tag"></span>`,
+    'panel-cal':   `<div style="display:flex;gap:8px;align-items:center"><span id="gcal-status-tag"></span><button class="btn-ghost" onclick="shiftWeek(-1)" style="padding:4px 10px;font-size:12px">‹</button><span id="week-range" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)"></span><button class="btn-ghost" onclick="shiftWeek(1)" style="padding:4px 10px;font-size:12px">›</button><button class="btn-ghost" onclick="shiftWeek(0)" style="padding:4px 8px;font-size:10px">Today</button><button class="connect-pill red" onclick="openSetup('gcal')" style="margin-left:4px">+ Cal</button></div>`,
     'panel-uni':   `<span id="canvas-status-tag"></span>`,
     'panel-work':  `<button class="connect-pill gold" onclick="openSetup('roster')">+ Add Shift</button>`,
     'panel-notes': `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">AUTO-SAVE</span>`,
     'panel-tax':   `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">SA · TFT TOGGLE</span>`,
     'panel-pomo':  `<span id="pomo-session-label" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">FOCUS SESSION</span>`,
-    'panel-week':  `<div style="display:flex;gap:8px;align-items:center"><button class="btn-ghost" onclick="shiftWeek(-1)" style="padding:4px 10px;font-size:12px">‹</button><span id="week-range" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)"></span><button class="btn-ghost" onclick="shiftWeek(1)" style="padding:4px 10px;font-size:12px">›</button><button class="btn-ghost" onclick="shiftWeek(0)" style="padding:4px 8px;font-size:10px">Today</button></div>`,
     'panel-links': `<button class="connect-pill green" onclick="openLinksModal()">+ Add Link</button>`,
   };
 
   const bodyMap = {
-    'panel-week': buildWeekViewHTML(),
-    'panel-cal': `<div id="gcal-body"><div class="empty"><span class="empty-icon">📅</span>Not connected<div style="margin-top:10px"><button class="connect-pill red" onclick="openSetup('gcal')">Connect Google</button></div></div></div>`,
+    'panel-cal': buildWeekViewHTML(),
     'panel-uni': `<div id="canvas-body"><div class="empty"><span class="empty-icon">🎓</span>Not connected<div style="margin-top:10px"><button class="connect-pill purple" onclick="openSetup('canvas')">Connect Canvas</button></div></div></div>`,
     'panel-work': `<div id="roster-body"><div class="empty"><span class="empty-icon">⏰</span>No shifts added<div style="margin-top:10px"><button class="connect-pill gold" onclick="openSetup('roster')">Add Shifts</button></div></div></div>`,
     'panel-notes': `<textarea class="notes-ta" id="notes-area" placeholder="jot stuff down...&#10;— reminders&#10;— ideas"></textarea>`,
@@ -1444,7 +1446,31 @@ function renderWeek24() {
 }
 
 // ─── WEEK GRID ────────────────────────────────────────────────────────────────
-function buildWeekGrid() { renderWeek24(); return; }
+function buildWeekGrid() {
+  renderWeek24();
+  const grid = document.getElementById('week-grid');
+  if (!grid) return;
+  const today = new Date();
+  const dow = today.getDay();
+  const mon = new Date(today); mon.setDate(today.getDate() - ((dow + 6) % 7));
+  const days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  grid.innerHTML = '';
+  let ws = null, we = null;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const isToday = d.toDateString() === today.toDateString();
+    const dateStr = d.toISOString().split('T')[0];
+    if (i === 0) ws = d; if (i === 6) we = d;
+    let pips = '';
+    S.calEvents.filter(e => e.date === dateStr).slice(0,3).forEach(() => { pips += '<div class="day-pip pip-cal"></div>'; });
+    S.assignments.filter(a => a.due === dateStr).slice(0,2).forEach(() => { pips += '<div class="day-pip pip-uni"></div>'; });
+    S.shifts.filter(s => s.date === dateStr).forEach(() => { pips += '<div class="day-pip pip-work"></div>'; });
+    const col = document.createElement('div');
+    col.innerHTML = `<div class="day-pill${isToday?' today':''}"><div class="day-pill-name">${days[i]}</div><div class="day-pill-num">${d.getDate()}</div><div class="day-pip-row">${pips}</div></div>`;
+    grid.appendChild(col);
+  }
+
+}
 function buildWeekGridPips() {
   const grid = document.getElementById('week-grid');
   if (!grid) return;
