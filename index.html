@@ -346,7 +346,7 @@ body {
 .week24-wrap {
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 420px;
+  max-height: 260px;
   position: relative;
 }
 .week24-grid {
@@ -383,12 +383,8 @@ body {
   text-transform: uppercase;
 }
 .week24-day-head.today .week24-day-name { color: #ffcccc; }
-.week24-day-num {
-  font-size: 15px; font-weight: 900;
-  color: var(--text-mid);
-  line-height: 1.1;
-}
-.week24-day-head.today .week24-day-num { color: white; }
+.week24-day-num { display: none; }
+.week24-day-head.today .week24-day-num { display: none; }
 .week24-time-col {
   position: sticky; left: 0;
   z-index: 2;
@@ -550,6 +546,17 @@ body {
 }
 .hex-text-input:focus { border-color: var(--red-dim); }
 
+
+/* ── RENAME ── */
+.rename-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 12px; color: var(--text-dim); padding: 2px 4px;
+  border-radius: 6px; opacity: 0; transition: opacity 0.15s;
+  line-height: 1;
+}
+.edit-mode .rename-btn { opacity: 1; display: inline !important; }
+.rename-btn:hover { color: var(--gold); }
+
 /* ── POMODORO ── */
 .pomo-tab { font-family: 'Share Tech Mono', monospace; font-size: 10px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel2); color: var(--text-dim); cursor: pointer; transition: all 0.2s; letter-spacing: 0.04em; }
 .pomo-tab:hover { border-color: var(--red-dim); color: var(--text); }
@@ -631,18 +638,9 @@ body {
 <body>
 
 <!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="main-sidebar">
   <div class="sidebar-logo">NX</div>
-  <button class="nav-btn active">🏠<span class="tooltip">Dashboard</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-cal')">📅<span class="tooltip">Calendar</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-uni')">🎓<span class="tooltip">Canvas</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-work')">⏰<span class="tooltip">Roster</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-pomo')">🍅<span class="tooltip">Pomodoro</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-tax')">💰<span class="tooltip">Tax</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-todos')">✅<span class="tooltip">To-Dos</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-habits')">🔥<span class="tooltip">Habits</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-links')">🔗<span class="tooltip">Quick Links</span></button>
-  <button class="nav-btn" onclick="scrollToPanel('panel-notes')">📝<span class="tooltip">Notes</span></button>
+  <div id="sidebar-nav-items"></div>
   <div class="sidebar-spacer"></div>
   <a href="habits.html" style="text-decoration:none">
     <button class="nav-btn" title="Tasks & Habits" style="font-size:15px">✅<span class="tooltip">Tasks & Habits</span></button>
@@ -906,7 +904,7 @@ function renderGrid() {
     // Card
     const card = document.createElement('div');
     card.className = 'card';
-    card.innerHTML = buildPanelHTML(item.id, def.title);
+    card.innerHTML = buildPanelHTML(item.id, item.customTitle || def.title);
     wrap.appendChild(card);
 
     // Drag events
@@ -922,6 +920,7 @@ function renderGrid() {
 
   // After render, init panel-specific things
   initPanelLogic();
+  renderSidebarNav();
   updateHiddenTray();
   buildWeekGrid();
   updateStats();
@@ -954,7 +953,8 @@ function buildPanelHTML(id, title) {
 
   return `
     <div class="card-header">
-      <span class="card-title">${title}</span>
+      <span class="card-title" id="title-${id}">${title}</span>
+      <button class="rename-btn" id="rename-btn-${id}" onclick="openRenameModal('${id}')" title="Rename" style="display:none">✏️</button>
       ${actionMap[id] || ''}
     </div>
     <div class="card-body">${bodyMap[id] || ''}</div>
@@ -1105,6 +1105,7 @@ if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
+renderSidebarNav();
 }
 function onDragEnd() {
   document.querySelectorAll('.panel-wrap').forEach(el => {
@@ -1119,11 +1120,10 @@ function toggleEditMode() {
   document.body.classList.toggle('edit-mode', editMode);
   document.getElementById('edit-banner').classList.toggle('active', editMode);
   document.getElementById('edit-toggle-btn').textContent = editMode ? '✅ Done' : '✏️ Edit Layout';
-
-  // Enable/disable draggable
   document.querySelectorAll('.panel-wrap').forEach(el => {
     el.setAttribute('draggable', editMode ? 'true' : 'false');
   });
+  renderSidebarNav();
 }
 
 function setSpan(id, span) {
@@ -1132,7 +1132,8 @@ function setSpan(id, span) {
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
-renderGrid(); }
+renderGrid();
+renderSidebarNav(); }
 }
 
 function hidePanel(id) {
@@ -1141,7 +1142,8 @@ function hidePanel(id) {
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
-renderGrid(); }
+renderGrid();
+renderSidebarNav(); }
 }
 
 function restorePanel(id) {
@@ -1150,7 +1152,8 @@ function restorePanel(id) {
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
-renderGrid(); }
+renderGrid();
+renderSidebarNav(); }
 }
 
 function resetLayout() {
@@ -1161,6 +1164,7 @@ if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
+renderSidebarNav();
 }
 
 function updateHiddenTray() {
@@ -1196,12 +1200,16 @@ function saveCalFeeds() { localStorage.setItem('nexus_cal_feeds', JSON.stringify
 function renderCalFeedList() {
   const el = document.getElementById('gcal-ical-list');
   if (!el) return;
-  if (!calFeeds.length) { el.innerHTML = ''; return; }
+  if (!calFeeds.length) { el.innerHTML = `<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);padding:6px 0">No calendars connected yet</div>`; return; }
   el.innerHTML = calFeeds.map((f,i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--panel3);border-radius:8px;margin-bottom:4px">
-      <div style="width:10px;height:10px;border-radius:50%;background:${f.color};flex-shrink:0"></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel3);border-radius:10px;margin-bottom:6px;border:1px solid var(--border)">
+      <div style="width:12px;height:12px;border-radius:50%;background:${f.color};flex-shrink:0;box-shadow:0 0 6px ${f.color}88"></div>
       <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-mid);flex:1">${f.name}</span>
-      <button onclick="removeCalFeed(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:0 4px">✕</button>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">${(f.events||[]).length} events</span>
+      <button onclick="removeCalFeed(${i})" title="Unlink calendar"
+        style="background:#e8354a22;border:1px solid #e8354a44;color:var(--red-soft);cursor:pointer;font-size:10px;padding:3px 8px;border-radius:6px;font-family:'Share Tech Mono',monospace;letter-spacing:0.05em">
+        UNLINK
+      </button>
     </div>`).join('');
 }
 
@@ -1359,7 +1367,6 @@ function renderWeek24() {
   weekDays.forEach((day,i) => {
     html += `<div class="week24-day-head${day.isToday?' today':''}" style="grid-column:${i+2};grid-row:1">
       <div class="week24-day-name">${day.label}</div>
-      <div class="week24-day-num">${day.d.getDate()}</div>
     </div>`;
   });
 
@@ -1464,7 +1471,7 @@ function buildWeekGrid() {
   const today = new Date();
   const dow = today.getDay();
   const mon = new Date(today); mon.setDate(today.getDate() - ((dow + 6) % 7));
-  const days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   grid.innerHTML = '';
   let ws = null, we = null;
   for (let i = 0; i < 7; i++) {
@@ -1488,7 +1495,7 @@ function buildWeekGridPips() {
   const today = new Date();
   const dow = today.getDay();
   const mon = new Date(today); mon.setDate(today.getDate() - ((dow + 6) % 7));
-  const days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   grid.innerHTML = '';
   let ws = null, we = null;
   for (let i = 0; i < 7; i++) {
@@ -1732,6 +1739,8 @@ const setupModalEl = document.getElementById('setupModal');
 if (setupModalEl) setupModalEl.addEventListener('click',e=>{if(e.target===setupModalEl)closeSetup();});
 const linksModalEl = document.getElementById('linksModal');
 if (linksModalEl) linksModalEl.addEventListener('click',e=>{if(e.target===linksModalEl)closeLinksModal();});
+const renameModalEl = document.getElementById('rename-modal');
+if (renameModalEl) renameModalEl.addEventListener('click',e=>{if(e.target===renameModalEl)closeRenameModal();});
 
 // ─── TAX CALCULATOR (FY2025-26 · SA) ─────────────────────────────────────────
 const TAX_BRACKETS=[{min:0,max:18200,rate:0.00,base:0},{min:18201,max:45000,rate:0.16,base:0},{min:45001,max:135000,rate:0.30,base:4288},{min:135001,max:190000,rate:0.37,base:31288},{min:190001,max:Infinity,rate:0.45,base:51638}];
@@ -1863,6 +1872,87 @@ function renderHabitsWidget() {
       <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?col:' var(--border)'};background:${done?col+'22':'transparent'};display:flex;align-items:center;justify-content:center;font-size:13px;color:${done?col:'var(--text-dim)'}">${done?'✓':'○'}</div>
     </div>`;
   }).join('');
+}
+
+
+// ─── SIDEBAR NAV ─────────────────────────────────────────────────────────────
+const DEFAULT_NAV = [
+  { icon:'🏠', label:'Dashboard', action:'home',        visible:true },
+  { icon:'📅', label:'Calendar',  action:'panel-cal',   visible:true },
+  { icon:'🎓', label:'Canvas',    action:'panel-uni',   visible:true },
+  { icon:'⏰', label:'Roster',    action:'panel-work',  visible:true },
+  { icon:'🍅', label:'Pomodoro',  action:'panel-pomo',  visible:true },
+  { icon:'💰', label:'Tax',       action:'panel-tax',   visible:true },
+  { icon:'✅', label:'To-Dos',    action:'panel-todos', visible:true },
+  { icon:'🔥', label:'Habits',    action:'panel-habits',visible:true },
+  { icon:'🔗', label:'Links',     action:'panel-links', visible:true },
+  { icon:'📝', label:'Notes',     action:'panel-notes', visible:true },
+];
+
+let navItems = JSON.parse(localStorage.getItem('nexus_nav') || 'null') || DEFAULT_NAV.map(n=>({...n}));
+
+function saveNav() { localStorage.setItem('nexus_nav', JSON.stringify(navItems)); }
+
+function renderSidebarNav() {
+  const el = document.getElementById('sidebar-nav-items');
+  if (!el) return;
+  el.innerHTML = navItems.filter(n => n.visible || editMode).map((n, i) => {
+    const hidden = !n.visible;
+    return `<div style="position:relative;display:flex;align-items:center">
+      <button class="nav-btn${hidden?' nav-hidden':''}"
+        onclick="${n.action==='home'?'':(`scrollToPanel('${n.action}')`)}"
+        title="${n.label}"
+        style="${hidden?'opacity:0.3;':''}">
+        ${n.icon}<span class="tooltip">${n.label}</span>
+      </button>
+      ${editMode ? `<button onclick="toggleNavItem(${i})" title="${hidden?'Show':'Hide'}"
+        style="position:absolute;right:-6px;top:-4px;width:16px;height:16px;border-radius:50%;
+        background:${hidden?'var(--green)':'var(--red)'};border:none;color:white;
+        font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-weight:900;z-index:10;line-height:1">${hidden?'+':'✕'}</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleNavItem(i) {
+  navItems[i].visible = !navItems[i].visible;
+  saveNav(); renderSidebarNav();
+}
+
+// ─── RENAME MODAL ─────────────────────────────────────────────────────────────
+let renamingPanelId = null;
+
+function openRenameModal(id) {
+  renamingPanelId = id;
+  const item = layout.find(l => l.id === id);
+  const def  = PANEL_DEFS.find(d => d.id === id);
+  const current = item?.customTitle || def?.title || '';
+  document.getElementById('rename-input').value = current.replace(/^[^ ]+ /,''); // strip emoji prefix
+  document.getElementById('rename-modal').classList.add('active');
+  setTimeout(() => document.getElementById('rename-input').select(), 100);
+}
+
+function closeRenameModal() {
+  document.getElementById('rename-modal').classList.remove('active');
+  renamingPanelId = null;
+}
+
+function applyRename() {
+  const val = document.getElementById('rename-input').value.trim();
+  if (!val || !renamingPanelId) { closeRenameModal(); return; }
+  const item = layout.find(l => l.id === renamingPanelId);
+  const def  = PANEL_DEFS.find(d => d.id === renamingPanelId);
+  // Preserve emoji prefix from original title
+  const origTitle = def?.title || '';
+  const emojiMatch = origTitle.match(/^(\S+) /);
+  const prefix = emojiMatch ? emojiMatch[1] + ' ' : '';
+  const newTitle = prefix + val;
+  if (item) item.customTitle = newTitle;
+  saveLayout();
+  // Update in DOM without full re-render
+  const titleEl = document.getElementById('title-' + renamingPanelId);
+  if (titleEl) titleEl.textContent = newTitle;
+  closeRenameModal();
 }
 
 // ─── QUICK LINKS ─────────────────────────────────────────────────────────────
@@ -2049,6 +2139,7 @@ if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
+renderSidebarNav();
 </script>
 <!-- LINKS MODAL -->
 <div class="modal-overlay" id="linksModal">
@@ -2091,6 +2182,31 @@ renderGrid();
         <button class="btn-ghost" onclick="closeLinksModal()">Cancel</button>
       </div>
 
+    </div>
+  </div>
+</div>
+
+
+<!-- RENAME MODAL -->
+<div class="modal-overlay" id="rename-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <span class="modal-title">✏️ Rename Panel</span>
+      <button class="modal-close" onclick="closeRenameModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="input-row">
+        <label class="input-label">NEW NAME</label>
+        <input class="cp-input" id="rename-input" placeholder="Enter panel name..."
+          onkeydown="if(event.key==='Enter')applyRename()"/>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);margin-bottom:12px">
+        The emoji prefix is kept automatically
+      </div>
+      <div class="btn-row">
+        <button class="btn-red" onclick="applyRename()">Rename</button>
+        <button class="btn-ghost" onclick="closeRenameModal()">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
