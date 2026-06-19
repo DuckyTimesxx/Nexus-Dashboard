@@ -639,9 +639,14 @@ body {
   <button class="nav-btn" onclick="scrollToPanel('panel-work')">⏰<span class="tooltip">Roster</span></button>
   <button class="nav-btn" onclick="scrollToPanel('panel-pomo')">🍅<span class="tooltip">Pomodoro</span></button>
   <button class="nav-btn" onclick="scrollToPanel('panel-tax')">💰<span class="tooltip">Tax</span></button>
+  <button class="nav-btn" onclick="scrollToPanel('panel-todos')">✅<span class="tooltip">To-Dos</span></button>
+  <button class="nav-btn" onclick="scrollToPanel('panel-habits')">🔥<span class="tooltip">Habits</span></button>
   <button class="nav-btn" onclick="scrollToPanel('panel-links')">🔗<span class="tooltip">Quick Links</span></button>
   <button class="nav-btn" onclick="scrollToPanel('panel-notes')">📝<span class="tooltip">Notes</span></button>
   <div class="sidebar-spacer"></div>
+  <a href="habits.html" style="text-decoration:none">
+    <button class="nav-btn" title="Tasks & Habits" style="font-size:15px">✅<span class="tooltip">Tasks & Habits</span></button>
+  </a>
   <a href="https://duckytimesxx.github.io/Study.Guide/" target="_blank" style="text-decoration:none">
     <button class="nav-btn" title="Study Guide" style="font-size:15px">📖<span class="tooltip">Study Guide</span></button>
   </a>
@@ -808,7 +813,9 @@ const PANEL_DEFS = [
   { id: 'panel-work', title: '⏰ Work Roster',           defaultSpan: 1 },
   { id: 'panel-pomo', title: '🍅 Pomodoro',             defaultSpan: 2 },
   { id: 'panel-notes',title: '📝 Quick Notes',          defaultSpan: 1 },
-  { id: 'panel-links',title: '🔗 Quick Links',          defaultSpan: 2 },
+  { id: 'panel-todos', title: '✅ To-Do List',          defaultSpan: 1 },
+  { id: 'panel-habits',title: '🔥 Habits',               defaultSpan: 1 },
+  { id: 'panel-links', title: '🔗 Quick Links',           defaultSpan: 2 },
   { id: 'panel-tax',  title: '💰 Tax Calculator',       defaultSpan: 3 },
 ];
 
@@ -928,6 +935,8 @@ function buildPanelHTML(id, title) {
     'panel-notes': `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">AUTO-SAVE</span>`,
     'panel-tax':   `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">SA · TFT TOGGLE</span>`,
     'panel-pomo':  `<span id="pomo-session-label" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">FOCUS SESSION</span>`,
+    'panel-todos': `<a href="habits.html" style="text-decoration:none"><button class="connect-pill green">Open Full List</button></a>`,
+    'panel-habits':`<a href="habits.html#habits" style="text-decoration:none"><button class="connect-pill green">Open Tracker</button></a>`,
     'panel-links': `<button class="connect-pill green" onclick="openLinksModal()">+ Add Link</button>`,
   };
 
@@ -936,6 +945,8 @@ function buildPanelHTML(id, title) {
     'panel-uni': `<div id="canvas-body"><div class="empty"><span class="empty-icon">🎓</span>Not connected<div style="margin-top:10px"><button class="connect-pill purple" onclick="openSetup('canvas')">Connect Canvas</button></div></div></div>`,
     'panel-work': `<div id="roster-body"><div class="empty"><span class="empty-icon">⏰</span>No shifts added<div style="margin-top:10px"><button class="connect-pill gold" onclick="openSetup('roster')">Add Shifts</button></div></div></div>`,
     'panel-notes': `<textarea class="notes-ta" id="notes-area" placeholder="jot stuff down...&#10;— reminders&#10;— ideas"></textarea>`,
+    'panel-todos': buildTodosWidgetHTML(),
+    'panel-habits': buildHabitsWidgetHTML(),
     'panel-links': buildLinksHTML(),
     'panel-pomo': buildPomoHTML(),
     'panel-tax': buildTaxHTML(),
@@ -1050,7 +1061,7 @@ function initPanelLogic() {
   if (savedDomain && document.getElementById('canvas-domain')) document.getElementById('canvas-domain').value = savedDomain;
   if (savedToken  && document.getElementById('canvas-token'))  document.getElementById('canvas-token').value  = savedToken;
   // Re-render data if already loaded
-  renderCalendar(); renderCanvas(); renderRoster(); renderLinks(); renderWeek24();
+  renderCalendar(); renderCanvas(); renderRoster(); renderLinks(); renderWeek24(); renderTodosWidget(); renderHabitsWidget();
   renderCalFeedList(); renderGcalColorPicker();
   // Restore canvas ical url
   const savedCanvasIcal = localStorage.getItem('nexus_canvas_ical');
@@ -1777,6 +1788,82 @@ function calcTax(){
   document.getElementById('tax-results').style.display='block';
 }
 function clearTax(){taxJobs=[];localStorage.removeItem('nexus_tax_jobs');renderTaxJobs();const r=document.getElementById('tax-results');if(r)r.style.display='none';}
+
+
+// ─── TODO WIDGET ─────────────────────────────────────────────────────────────
+function buildTodosWidgetHTML() {
+  return `<div id="todos-widget-body"></div>
+  <a href="habits.html" style="text-decoration:none;display:block;margin-top:10px">
+    <button class="btn-ghost" style="width:100%;font-size:11px">View all tasks →</button>
+  </a>`;
+}
+
+function renderTodosWidget() {
+  const el = document.getElementById('todos-widget-body');
+  if (!el) return;
+  const todos = JSON.parse(localStorage.getItem('nexus_todos') || '[]');
+  const active = todos.filter(t => !t.done).sort((a,b) => {
+    if (!a.due && !b.due) return 0;
+    if (!a.due) return 1; if (!b.due) return -1;
+    return a.due.localeCompare(b.due);
+  }).slice(0, 5);
+
+  if (!active.length) {
+    el.innerHTML = `<div class="empty" style="padding:16px"><span style="font-size:22px;display:block;margin-bottom:6px;opacity:0.3">✅</span><div style="font-size:12px;color:var(--text-dim)">All done!</div></div>`;
+    return;
+  }
+  const catColor = {uni:'#a78bfa',work:'#e8b84b',personal:'#60a5fa',health:'#4ade80',other:'#ffffff'};
+  el.innerHTML = active.map(t => {
+    const col = catColor[t.cat] || '#ffffff';
+    const iconHTML = t.iconType==='image'&&t.iconData ? `<img src="${t.iconData}" style="width:20px;height:20px;border-radius:5px;object-fit:cover"/>` : `<span style="font-size:14px">${t.icon||'📝'}</span>`;
+    const due = t.due ? `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);margin-left:4px">${t.due}</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:24px;height:24px;border-radius:6px;background:${col}22;border:1px solid ${col}44;display:flex;align-items:center;justify-content:center;flex-shrink:0">${iconHTML}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</div>
+        <div style="display:flex;align-items:center;gap:4px">${due}</div>
+      </div>
+      <div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${{high:'var(--red)',medium:'var(--gold)',low:'var(--text-dim)'}[t.priority||'medium']}"></div>
+    </div>`;
+  }).join('');
+}
+
+// ─── HABITS WIDGET ────────────────────────────────────────────────────────────
+function buildHabitsWidgetHTML() {
+  return `<div id="habits-widget-body"></div>
+  <a href="habits.html" style="text-decoration:none;display:block;margin-top:10px">
+    <button class="btn-ghost" style="width:100%;font-size:11px">View full tracker →</button>
+  </a>`;
+}
+
+function renderHabitsWidget() {
+  const el = document.getElementById('habits-widget-body');
+  if (!el) return;
+  const habits = JSON.parse(localStorage.getItem('nexus_habits') || '[]');
+  if (!habits.length) {
+    el.innerHTML = `<div class="empty" style="padding:16px"><span style="font-size:22px;display:block;margin-bottom:6px;opacity:0.3">🔥</span><div style="font-size:12px;color:var(--text-dim)">No habits yet</div></div>`;
+    return;
+  }
+  const today = new Date().toISOString().split('T')[0];
+  el.innerHTML = habits.map(h => {
+    const log = h.log || {};
+    const done = !!log[today];
+    const col = h.color || 'var(--accent)';
+    // Mini streak calc
+    let streak = 0;
+    const d = new Date(); if (!log[d.toISOString().split('T')[0]]) d.setDate(d.getDate()-1);
+    while(log[d.toISOString().split('T')[0]]) { streak++; d.setDate(d.getDate()-1); }
+    const iconHTML = h.iconType==='image'&&h.iconData ? `<img src="${h.iconData}" style="width:20px;height:20px;border-radius:5px;object-fit:cover"/>` : `<span style="font-size:16px">${h.icon||'🔥'}</span>`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:28px;height:28px;border-radius:8px;background:${col}22;border:1px solid ${col}44;display:flex;align-items:center;justify-content:center;flex-shrink:0">${iconHTML}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;color:var(--white)">${h.name}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">${streak > 0 ? '🔥 '+streak+' day streak' : 'No streak yet'}</div>
+      </div>
+      <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?col:' var(--border)'};background:${done?col+'22':'transparent'};display:flex;align-items:center;justify-content:center;font-size:13px;color:${done?col:'var(--text-dim)'}">${done?'✓':'○'}</div>
+    </div>`;
+  }).join('');
+}
 
 // ─── QUICK LINKS ─────────────────────────────────────────────────────────────
 function buildLinksHTML() {
