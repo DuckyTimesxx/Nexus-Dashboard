@@ -342,6 +342,85 @@ body {
 .notes-ta:focus { border-color: var(--red-dim); }
 .notes-ta::placeholder { color: var(--text-dim); }
 
+/* ── QUICK LINKS ── */
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+}
+.link-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: var(--panel2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  text-align: center;
+}
+.link-item:hover { border-color: var(--red-dim); background: var(--panel3); transform: translateY(-2px); box-shadow: 0 6px 20px #0006; }
+.link-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.link-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+.link-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-mid);
+  word-break: break-word;
+  line-height: 1.2;
+}
+.link-delete {
+  position: absolute;
+  top: -6px; right: -6px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--red);
+  border: none;
+  color: white;
+  font-size: 9px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  line-height: 1;
+}
+.edit-mode .link-delete { display: flex; }
+
+/* Links modal */
+.icon-picker { display: grid; grid-template-columns: repeat(8,1fr); gap: 6px; margin: 8px 0; }
+.icon-opt {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.icon-opt:hover, .icon-opt.selected { border-color: var(--red); background: #e8354a22; }
+.color-picker-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.color-opt {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.color-opt:hover, .color-opt.selected { border-color: white; transform: scale(1.15); }
+
 /* ── POMODORO ── */
 .pomo-tab { font-family: 'Share Tech Mono', monospace; font-size: 10px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel2); color: var(--text-dim); cursor: pointer; transition: all 0.2s; letter-spacing: 0.04em; }
 .pomo-tab:hover { border-color: var(--red-dim); color: var(--text); }
@@ -431,8 +510,12 @@ body {
   <button class="nav-btn" onclick="scrollToPanel('panel-work')">⏰<span class="tooltip">Roster</span></button>
   <button class="nav-btn" onclick="scrollToPanel('panel-pomo')">🍅<span class="tooltip">Pomodoro</span></button>
   <button class="nav-btn" onclick="scrollToPanel('panel-tax')">💰<span class="tooltip">Tax</span></button>
+  <button class="nav-btn" onclick="scrollToPanel('panel-links')">🔗<span class="tooltip">Quick Links</span></button>
   <button class="nav-btn" onclick="scrollToPanel('panel-notes')">📝<span class="tooltip">Notes</span></button>
   <div class="sidebar-spacer"></div>
+  <a href="https://duckytimesxx.github.io/Study.Guide/" target="_blank" style="text-decoration:none">
+    <button class="nav-btn" title="Study Guide" style="font-size:15px">📖<span class="tooltip">Study Guide</span></button>
+  </a>
   <button class="setup-fab" onclick="openSetup()" title="Settings">⚙️</button>
 </div>
 
@@ -500,18 +583,32 @@ body {
     <div class="modal-body">
       <div class="modal-section" id="section-gcal">
         <div class="modal-section-title" style="color:var(--blue)">📅 Google Calendar</div>
-        <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">Requires a Google Cloud API key + OAuth Client ID.</p>
-        <div class="setup-step"><span class="step-num">1.</span><span class="step-text">Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> → New project</span></div>
-        <div class="setup-step"><span class="step-num">2.</span><span class="step-text">Enable the <strong style="color:var(--blue)">Google Calendar API</strong></span></div>
-        <div class="setup-step"><span class="step-num">3.</span><span class="step-text">Credentials → Create → <strong style="color:var(--blue)">API Key</strong> + <strong style="color:var(--blue)">OAuth 2.0 Client ID</strong></span></div>
-        <div class="setup-step"><span class="step-num">4.</span><span class="step-text">Add this page's URL as an authorised origin in the OAuth settings</span></div>
-        <div class="input-row"><label class="input-label">GOOGLE API KEY</label><input class="cp-input" id="gcal-apikey" placeholder="AIza..."/></div>
-        <div class="input-row"><label class="input-label">OAUTH CLIENT ID</label><input class="cp-input" id="gcal-clientid" placeholder="123....apps.googleusercontent.com"/></div>
-        <div class="btn-row">
-          <button class="btn-red" onclick="initGCal()">Connect Google Calendar</button>
-          <button class="btn-ghost" onclick="loadDemoCalendar()">Load Demo Data</button>
+
+        <!-- OPTION A: iCal (recommended) -->
+        <div style="background:var(--panel2);border:1px solid #4ade8044;border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:800;color:var(--green);margin-bottom:8px;letter-spacing:0.06em">✓ OPTION A — iCal URL (easiest, no account needed)</div>
+          <div class="setup-step"><span class="step-num">1.</span><span class="step-text">Open <strong style="color:var(--text)">Google Calendar</strong> on desktop → click the gear ⚙ → Settings</span></div>
+          <div class="setup-step"><span class="step-num">2.</span><span class="step-text">Click your calendar name in the left sidebar → <strong style="color:var(--green)">Integrate calendar</strong></span></div>
+          <div class="setup-step"><span class="step-num">3.</span><span class="step-text">Copy the <strong style="color:var(--green)">Secret address in iCal format</strong> link (starts with <code>https://calendar.google.com/calendar/ical/...</code>)</span></div>
+          <div class="setup-step"><span class="step-num">4.</span><span class="step-text">Paste it below and click Load — done, no login required</span></div>
+          <div class="input-row" style="margin-top:10px"><label class="input-label">ICAL URL</label><input class="cp-input" id="gcal-ical-url" placeholder="https://calendar.google.com/calendar/ical/..."/></div>
+          <div class="btn-row">
+            <button class="btn-red" onclick="loadCalendarIcal()">Load iCal Calendar</button>
+            <button class="btn-ghost" onclick="loadDemoCalendar()">Load Demo Data</button>
+          </div>
         </div>
-        <div id="gcal-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:8px"></div>
+
+        <!-- OPTION B: OAuth -->
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div style="font-size:11px;font-weight:800;color:var(--text-dim);margin-bottom:8px;letter-spacing:0.06em">OPTION B — Google OAuth (needs Google Cloud Console)</div>
+          <div class="setup-step"><span class="step-num">1.</span><span class="step-text">Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> → New project → Enable Calendar API</span></div>
+          <div class="setup-step"><span class="step-num">2.</span><span class="step-text">Credentials → Create API Key + OAuth 2.0 Client ID → add this page URL as authorised origin</span></div>
+          <div class="input-row" style="margin-top:8px"><label class="input-label">GOOGLE API KEY</label><input class="cp-input" id="gcal-apikey" placeholder="AIza..."/></div>
+          <div class="input-row"><label class="input-label">OAUTH CLIENT ID</label><input class="cp-input" id="gcal-clientid" placeholder="123....apps.googleusercontent.com"/></div>
+          <div class="btn-row"><button class="btn-ghost" onclick="initGCal()">Connect via OAuth</button></div>
+        </div>
+
+        <div id="gcal-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:10px"></div>
       </div>
       <div class="modal-section" id="section-canvas">
         <div class="modal-section-title" style="color:var(--purple)">🎓 Canvas LMS</div>
@@ -555,6 +652,7 @@ const PANEL_DEFS = [
   { id: 'panel-work', title: '⏰ Work Roster',           defaultSpan: 1 },
   { id: 'panel-pomo', title: '🍅 Pomodoro',             defaultSpan: 2 },
   { id: 'panel-notes',title: '📝 Quick Notes',          defaultSpan: 1 },
+  { id: 'panel-links',title: '🔗 Quick Links',          defaultSpan: 2 },
   { id: 'panel-tax',  title: '💰 Tax Calculator',       defaultSpan: 3 },
 ];
 
@@ -675,6 +773,7 @@ function buildPanelHTML(id, title) {
     'panel-tax':   `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">SA · TFT TOGGLE</span>`,
     'panel-pomo':  `<span id="pomo-session-label" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">FOCUS SESSION</span>`,
     'panel-week':  `<span id="week-range" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)"></span>`,
+    'panel-links': `<button class="connect-pill green" onclick="openLinksModal()">+ Add Link</button>`,
   };
 
   const bodyMap = {
@@ -683,6 +782,7 @@ function buildPanelHTML(id, title) {
     'panel-uni': `<div id="canvas-body"><div class="empty"><span class="empty-icon">🎓</span>Not connected<div style="margin-top:10px"><button class="connect-pill purple" onclick="openSetup('canvas')">Connect Canvas</button></div></div></div>`,
     'panel-work': `<div id="roster-body"><div class="empty"><span class="empty-icon">⏰</span>No shifts added<div style="margin-top:10px"><button class="connect-pill gold" onclick="openSetup('roster')">Add Shifts</button></div></div></div>`,
     'panel-notes': `<textarea class="notes-ta" id="notes-area" placeholder="jot stuff down...&#10;— reminders&#10;— ideas"></textarea>`,
+    'panel-links': buildLinksHTML(),
     'panel-pomo': buildPomoHTML(),
     'panel-tax': buildTaxHTML(),
   };
@@ -796,7 +896,7 @@ function initPanelLogic() {
   if (savedDomain && document.getElementById('canvas-domain')) document.getElementById('canvas-domain').value = savedDomain;
   if (savedToken  && document.getElementById('canvas-token'))  document.getElementById('canvas-token').value  = savedToken;
   // Re-render data if already loaded
-  renderCalendar(); renderCanvas(); renderRoster();
+  renderCalendar(); renderCanvas(); renderRoster(); renderLinks();
   // Tax
   renderTaxJobs();
   // Pomo
@@ -831,7 +931,11 @@ function onDrop(e) {
   const [removed] = layout.splice(srcIdx, 1);
   layout.splice(tgtIdx, 0, removed);
   saveLayout();
-  renderGrid();
+  // Restore saved ical url
+const savedIcal = localStorage.getItem('nexus_gcal_ical');
+if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
+
+renderGrid();
 }
 function onDragEnd() {
   document.querySelectorAll('.panel-wrap').forEach(el => {
@@ -855,23 +959,39 @@ function toggleEditMode() {
 
 function setSpan(id, span) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.span = span; saveLayout(); renderGrid(); }
+  if (item) { item.span = span; saveLayout(); // Restore saved ical url
+const savedIcal = localStorage.getItem('nexus_gcal_ical');
+if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
+
+renderGrid(); }
 }
 
 function hidePanel(id) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.hidden = true; saveLayout(); renderGrid(); }
+  if (item) { item.hidden = true; saveLayout(); // Restore saved ical url
+const savedIcal = localStorage.getItem('nexus_gcal_ical');
+if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
+
+renderGrid(); }
 }
 
 function restorePanel(id) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.hidden = false; saveLayout(); renderGrid(); }
+  if (item) { item.hidden = false; saveLayout(); // Restore saved ical url
+const savedIcal = localStorage.getItem('nexus_gcal_ical');
+if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
+
+renderGrid(); }
 }
 
 function resetLayout() {
   layout = DEFAULT_LAYOUT.map(l => ({...l}));
   saveLayout();
-  renderGrid();
+  // Restore saved ical url
+const savedIcal = localStorage.getItem('nexus_gcal_ical');
+if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
+
+renderGrid();
 }
 
 function updateHiddenTray() {
@@ -937,6 +1057,79 @@ function updateStats() {
   const se=document.getElementById('stat-events');     if(se) se.textContent=eventsToday;
   const sa=document.getElementById('stat-assignments'); if(sa) sa.textContent=assignsDue;
   const sh=document.getElementById('stat-hours');       if(sh) sh.textContent=totalHrs.toFixed(1);
+}
+
+// ─── ICAL PARSER ─────────────────────────────────────────────────────────────
+function parseIcal(text) {
+  const events = [];
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    // unfold lines (lines starting with space/tab continue previous)
+    .replace(/\n[ \t]/g, '').split('\n');
+
+  let inEvent = false, current = {};
+  for (const line of lines) {
+    if (line === 'BEGIN:VEVENT') { inEvent = true; current = {}; continue; }
+    if (line === 'END:VEVENT') {
+      if (current.title && current.date) events.push(current);
+      inEvent = false; continue;
+    }
+    if (!inEvent) continue;
+    const colon = line.indexOf(':');
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).split(';')[0].toUpperCase();
+    const val = line.slice(colon + 1).trim();
+
+    if (key === 'SUMMARY') {
+      current.title = val.replace(/\\,/g, ',').replace(/\\n/g, ' ').replace(/\\;/g, ';');
+    } else if (key === 'DTSTART') {
+      // Could be date-only (20250619) or datetime (20250619T090000Z or 20250619T090000)
+      if (val.length === 8) {
+        current.date = `${val.slice(0,4)}-${val.slice(4,6)}-${val.slice(6,8)}`;
+        current.time = null;
+      } else {
+        const d = new Date(
+          val.includes('Z') ? val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, '$1-$2-$3T$4:$5:$6Z')
+                             : val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/, '$1-$2-$3T$4:$5:$6')
+        );
+        if (!isNaN(d)) {
+          current.date = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
+          current.time = d.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12: false });
+        }
+      }
+    } else if (key === 'LOCATION') {
+      current.location = val;
+    }
+  }
+  return events.map(e => ({ ...e, type: 'normal' }));
+}
+
+async function loadCalendarIcal() {
+  const url = document.getElementById('gcal-ical-url').value.trim();
+  const fb  = document.getElementById('gcal-feedback');
+  if (!url) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Paste your iCal URL first'; return; }
+
+  fb.style.color='var(--blue)'; fb.textContent='⏳ Fetching calendar...';
+
+  // Google's ical URLs are CORS-blocked from browsers, so we use a proxy
+  // cors-anywhere or allorigins both work as free public proxies
+  const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+
+  try {
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    if (!text.includes('BEGIN:VCALENDAR')) throw new Error('Not a valid iCal feed — check your URL');
+    const parsed = parseIcal(text);
+    if (!parsed.length) throw new Error('No events found in feed');
+    S.calEvents = parsed;
+    localStorage.setItem('nexus_events', JSON.stringify(S.calEvents));
+    localStorage.setItem('nexus_gcal_ical', url);
+    fb.style.color='var(--green)'; fb.textContent=`✓ Loaded ${parsed.length} events from your calendar`;
+    renderCalendar(); buildWeekGrid(); updateStats();
+  } catch(e) {
+    fb.style.color='var(--red-soft)';
+    fb.textContent='✕ ' + e.message + ' — Make sure the URL is the Secret iCal address from Google Calendar settings';
+  }
 }
 
 // ─── RENDER CALENDAR ─────────────────────────────────────────────────────────
@@ -1070,7 +1263,10 @@ function openSetup(section) {
   if(section==='roster'&&!document.querySelectorAll('#shift-entries .shift-input-row').length){S.shifts.forEach(s=>addShiftRow(s.date,s.start,s.end));if(!S.shifts.length)addShiftRow();}
 }
 function closeSetup(){document.getElementById('setupModal').classList.remove('active');}
-document.getElementById('setupModal').addEventListener('click',e=>{if(e.target===document.getElementById('setupModal'))closeSetup();});
+const setupModalEl = document.getElementById('setupModal');
+if (setupModalEl) setupModalEl.addEventListener('click',e=>{if(e.target===setupModalEl)closeSetup();});
+const linksModalEl = document.getElementById('linksModal');
+if (linksModalEl) linksModalEl.addEventListener('click',e=>{if(e.target===linksModalEl)closeLinksModal();});
 
 // ─── TAX CALCULATOR (FY2025-26 · SA) ─────────────────────────────────────────
 const TAX_BRACKETS=[{min:0,max:18200,rate:0.00,base:0},{min:18201,max:45000,rate:0.16,base:0},{min:45001,max:135000,rate:0.30,base:4288},{min:135001,max:190000,rate:0.37,base:31288},{min:190001,max:Infinity,rate:0.45,base:51638}];
@@ -1128,6 +1324,125 @@ function calcTax(){
 }
 function clearTax(){taxJobs=[];localStorage.removeItem('nexus_tax_jobs');renderTaxJobs();const r=document.getElementById('tax-results');if(r)r.style.display='none';}
 
+// ─── QUICK LINKS ─────────────────────────────────────────────────────────────
+function buildLinksHTML() {
+  return `<div class="links-grid" id="links-grid"></div>
+  <div id="links-empty" style="display:none" class="empty"><span class="empty-icon">🔗</span>No links yet<div style="margin-top:8px"><button class="connect-pill green" onclick="openLinksModal()">+ Add Link</button></div></div>`;
+}
+
+let savedLinks = JSON.parse(localStorage.getItem('nexus_links') || '[]');
+
+const PRESET_ICONS = ['📅','🎓','⏰','📝','💰','🔗','🏠','⭐','📚','🖥','📱','📧','🗂','🎯','🌐','🔑','📊','🎨','🎵','🏃','💡','🔬','⚙','🧪','📐','✏️','🖨','📌'];
+const PRESET_COLORS = ['#e8354a','#e8b84b','#4ade80','#60a5fa','#a78bfa','#f97316','#ec4899','#14b8a6','#8b5cf6','#ef4444','#3b82f6','#10b981'];
+
+let linkDraft = { label: '', url: '', icon: '🔗', iconType: 'emoji', iconData: null, color: '#e8354a' };
+let selectedIconIdx = 0;
+let selectedColorIdx = 0;
+
+function renderLinks() {
+  const grid = document.getElementById('links-grid');
+  const empty = document.getElementById('links-empty');
+  if (!grid) return;
+  if (!savedLinks.length) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  grid.innerHTML = savedLinks.map((link, i) => {
+    const iconHTML = link.iconType === 'image' && link.iconData
+      ? `<img src="${link.iconData}" alt="${link.label}"/>`
+      : link.icon;
+    const bg = link.color ? link.color + '22' : '#e8354a22';
+    const border = link.color ? link.color + '66' : '#e8354a66';
+    return `
+      <a class="link-item" href="${link.url}" target="_blank" onclick="if(event.target.classList.contains('link-delete')||event.target.closest('.link-delete'))event.preventDefault()">
+        <button class="link-delete" onclick="deleteLink(${i})">✕</button>
+        <div class="link-icon" style="background:${bg};border:1px solid ${border}">${iconHTML}</div>
+        <div class="link-label">${link.label}</div>
+      </a>`;
+  }).join('');
+}
+
+function deleteLink(i) {
+  savedLinks.splice(i, 1);
+  localStorage.setItem('nexus_links', JSON.stringify(savedLinks));
+  renderLinks();
+}
+
+function openLinksModal() {
+  linkDraft = { label: '', url: '', icon: '🔗', iconType: 'emoji', iconData: null, color: '#e8354a' };
+  selectedIconIdx = 0; selectedColorIdx = 0;
+  document.getElementById('linksModal').classList.add('active');
+  renderIconPicker(); renderColorPicker();
+  document.getElementById('link-label-input').value = '';
+  document.getElementById('link-url-input').value = '';
+  document.getElementById('link-custom-emoji').value = '';
+  document.getElementById('link-img-preview').style.display = 'none';
+  document.getElementById('link-feedback').textContent = '';
+}
+function closeLinksModal() { document.getElementById('linksModal').classList.remove('active'); }
+
+function renderIconPicker() {
+  document.getElementById('link-icon-picker').innerHTML = PRESET_ICONS.map((ic, i) =>
+    `<div class="icon-opt${i===selectedIconIdx?' selected':''}" onclick="selectIcon(${i},'${ic}')">${ic}</div>`
+  ).join('');
+}
+
+function selectIcon(i, emoji) {
+  selectedIconIdx = i;
+  linkDraft.icon = emoji; linkDraft.iconType = 'emoji'; linkDraft.iconData = null;
+  document.getElementById('link-img-preview').style.display = 'none';
+  renderIconPicker();
+}
+
+function renderColorPicker() {
+  document.getElementById('link-color-picker').innerHTML = PRESET_COLORS.map((col, i) =>
+    `<div class="color-opt${i===selectedColorIdx?' selected':''}" style="background:${col}" onclick="selectColor(${i},'${col}')"></div>`
+  ).join('');
+}
+
+function selectColor(i, col) {
+  selectedColorIdx = i; linkDraft.color = col;
+  renderColorPicker();
+}
+
+function handleIconUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    linkDraft.iconData = e.target.result;
+    linkDraft.iconType = 'image';
+    const prev = document.getElementById('link-img-preview');
+    prev.src = e.target.result; prev.style.display = 'block';
+    // deselect emoji
+    selectedIconIdx = -1; renderIconPicker();
+  };
+  reader.readAsDataURL(file);
+}
+
+function applyCustomEmoji() {
+  const val = document.getElementById('link-custom-emoji').value.trim();
+  if (!val) return;
+  linkDraft.icon = val; linkDraft.iconType = 'emoji'; linkDraft.iconData = null;
+  selectedIconIdx = -1; renderIconPicker();
+  document.getElementById('link-img-preview').style.display = 'none';
+}
+
+function saveLink() {
+  const label = document.getElementById('link-label-input').value.trim();
+  let url = document.getElementById('link-url-input').value.trim();
+  const fb = document.getElementById('link-feedback');
+  if (!label) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Enter a name'; return; }
+  if (!url)   { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Enter a URL'; return; }
+  if (!url.startsWith('http')) url = 'https://' + url;
+  savedLinks.push({ label, url, icon: linkDraft.icon, iconType: linkDraft.iconType, iconData: linkDraft.iconData, color: linkDraft.color });
+  localStorage.setItem('nexus_links', JSON.stringify(savedLinks));
+  closeLinksModal();
+  renderLinks();
+}
+
 // ─── POMODORO ─────────────────────────────────────────────────────────────────
 const POMO_MODES={focus:{mins:25,label:'FOCUS',color:'var(--red)',tab:'tab-focus'},short:{mins:5,label:'SHORT BREAK',color:'var(--green)',tab:'tab-short'},long:{mins:15,label:'LONG BREAK',color:'var(--blue)',tab:'tab-long'},custom:{mins:25,label:'CUSTOM',color:'var(--purple)',tab:'tab-custom'}};
 const POMO_C=2*Math.PI*64;
@@ -1173,7 +1488,56 @@ function resetPomo(){clearInterval(pomoState.interval);pomoState.running=false;c
 function skipPomo(){clearInterval(pomoState.interval);pomoState.running=false;onPomoComplete();}
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
+// Restore saved ical url
+const savedIcal = localStorage.getItem('nexus_gcal_ical');
+if (savedIcal && document.getElementById('gcal-ical-url')) document.getElementById('gcal-ical-url').value = savedIcal;
+
 renderGrid();
 </script>
+<!-- LINKS MODAL -->
+<div class="modal-overlay" id="linksModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">🔗 Add Quick Link</span>
+      <button class="modal-close" onclick="closeLinksModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="input-row">
+        <label class="input-label">NAME</label>
+        <input class="cp-input" id="link-label-input" placeholder="e.g. Canvas, Work Roster, Spotify..."/>
+      </div>
+      <div class="input-row">
+        <label class="input-label">URL</label>
+        <input class="cp-input" id="link-url-input" placeholder="https://..."/>
+      </div>
+
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.08em;margin:14px 0 6px">ICON — PICK EMOJI</div>
+      <div class="icon-picker" id="link-icon-picker"></div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+        <input class="cp-input" id="link-custom-emoji" placeholder="or type any emoji" style="width:160px;font-size:16px"/>
+        <button class="btn-ghost" onclick="applyCustomEmoji()" style="font-size:11px;padding:7px 12px;white-space:nowrap">Use it</button>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">or</span>
+        <label class="btn-ghost" style="font-size:11px;padding:7px 12px;cursor:pointer;white-space:nowrap">
+          Upload image
+          <input type="file" accept="image/*" style="display:none" onchange="handleIconUpload(this)"/>
+        </label>
+      </div>
+      <img id="link-img-preview" style="display:none;width:44px;height:44px;border-radius:10px;object-fit:cover;margin-bottom:10px;border:1px solid var(--border)"/>
+
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.08em;margin-bottom:6px">ICON BACKGROUND COLOUR</div>
+      <div class="color-picker-row" id="link-color-picker"></div>
+
+      <div id="link-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;margin:8px 0;min-height:16px"></div>
+      <div class="btn-row">
+        <button class="btn-red" onclick="saveLink()">Add Link</button>
+        <button class="btn-ghost" onclick="closeLinksModal()">Cancel</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
