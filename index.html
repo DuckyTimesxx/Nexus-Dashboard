@@ -1100,7 +1100,19 @@ function onDrop(e) {
   const [removed] = layout.splice(srcIdx, 1);
   layout.splice(tgtIdx, 0, removed);
   saveLayout();
-  // Restore cal feeds on load
+ 
+// Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
+(function migrateOldFeed() {
+  const oldUrl = localStorage.getItem('nexus_gcal_ical');
+  if (oldUrl && !calFeeds.find(f => f.url === oldUrl)) {
+    const oldEvents = JSON.parse(localStorage.getItem('nexus_events') || '[]');
+    calFeeds.push({ url: oldUrl, name: 'My Calendar', color: '#60a5fa', events: oldEvents });
+    localStorage.setItem('nexus_cal_feeds', JSON.stringify(calFeeds));
+    localStorage.removeItem('nexus_gcal_ical');
+  }
+})();
+
+// Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
@@ -1128,7 +1140,19 @@ function toggleEditMode() {
 
 function setSpan(id, span) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.span = span; saveLayout(); // Restore cal feeds on load
+  if (item) { item.span = span; saveLayout();
+// Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
+(function migrateOldFeed() {
+  const oldUrl = localStorage.getItem('nexus_gcal_ical');
+  if (oldUrl && !calFeeds.find(f => f.url === oldUrl)) {
+    const oldEvents = JSON.parse(localStorage.getItem('nexus_events') || '[]');
+    calFeeds.push({ url: oldUrl, name: 'My Calendar', color: '#60a5fa', events: oldEvents });
+    localStorage.setItem('nexus_cal_feeds', JSON.stringify(calFeeds));
+    localStorage.removeItem('nexus_gcal_ical');
+  }
+})();
+
+// Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
@@ -1138,7 +1162,19 @@ renderSidebarNav(); }
 
 function hidePanel(id) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.hidden = true; saveLayout(); // Restore cal feeds on load
+  if (item) { item.hidden = true; saveLayout();
+// Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
+(function migrateOldFeed() {
+  const oldUrl = localStorage.getItem('nexus_gcal_ical');
+  if (oldUrl && !calFeeds.find(f => f.url === oldUrl)) {
+    const oldEvents = JSON.parse(localStorage.getItem('nexus_events') || '[]');
+    calFeeds.push({ url: oldUrl, name: 'My Calendar', color: '#60a5fa', events: oldEvents });
+    localStorage.setItem('nexus_cal_feeds', JSON.stringify(calFeeds));
+    localStorage.removeItem('nexus_gcal_ical');
+  }
+})();
+
+// Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
@@ -1148,7 +1184,19 @@ renderSidebarNav(); }
 
 function restorePanel(id) {
   const item = layout.find(l => l.id === id);
-  if (item) { item.hidden = false; saveLayout(); // Restore cal feeds on load
+  if (item) { item.hidden = false; saveLayout();
+// Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
+(function migrateOldFeed() {
+  const oldUrl = localStorage.getItem('nexus_gcal_ical');
+  if (oldUrl && !calFeeds.find(f => f.url === oldUrl)) {
+    const oldEvents = JSON.parse(localStorage.getItem('nexus_events') || '[]');
+    calFeeds.push({ url: oldUrl, name: 'My Calendar', color: '#60a5fa', events: oldEvents });
+    localStorage.setItem('nexus_cal_feeds', JSON.stringify(calFeeds));
+    localStorage.removeItem('nexus_gcal_ical');
+  }
+})();
+
+// Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
@@ -1159,7 +1207,19 @@ renderSidebarNav(); }
 function resetLayout() {
   layout = DEFAULT_LAYOUT.map(l => ({...l}));
   saveLayout();
-  // Restore cal feeds on load
+ 
+// Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
+(function migrateOldFeed() {
+  const oldUrl = localStorage.getItem('nexus_gcal_ical');
+  if (oldUrl && !calFeeds.find(f => f.url === oldUrl)) {
+    const oldEvents = JSON.parse(localStorage.getItem('nexus_events') || '[]');
+    calFeeds.push({ url: oldUrl, name: 'My Calendar', color: '#60a5fa', events: oldEvents });
+    localStorage.setItem('nexus_cal_feeds', JSON.stringify(calFeeds));
+    localStorage.removeItem('nexus_gcal_ical');
+  }
+})();
+
+// Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
@@ -2135,6 +2195,21 @@ function skipPomo(){clearInterval(pomoState.interval);pomoState.running=false;on
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // Restore cal feeds on load
+if (calFeeds.length) {
+  S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+}
+// Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
+(function migrateOldFeed() {
+  const oldUrl = localStorage.getItem('nexus_gcal_ical');
+  if (oldUrl && !calFeeds.find(f => f.url === oldUrl)) {
+    const oldEvents = JSON.parse(localStorage.getItem('nexus_events') || '[]');
+    calFeeds.push({ url: oldUrl, name: 'My Calendar', color: '#60a5fa', events: oldEvents });
+    localStorage.setItem('nexus_cal_feeds', JSON.stringify(calFeeds));
+    localStorage.removeItem('nexus_gcal_ical');
+  }
+})();
+
+// Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
