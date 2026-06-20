@@ -785,16 +785,24 @@ body {
       </div>
       <div class="modal-section" id="section-roster">
         <div class="modal-section-title" style="color:var(--gold)">⏰ Work Roster</div>
-        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:10px;font-weight:800;color:var(--gold);margin-bottom:6px;letter-spacing:0.06em">OPTION A — iCal URL</div>
-          <div class="input-row" style="margin-bottom:8px"><input class="cp-input" id="roster-ical" placeholder="webcal:// or https://..."/></div>
-          <button class="btn-ghost" onclick="loadIcal()" style="font-size:11px">Load iCal</button>
+
+        <!-- iCal feeds -->
+        <div style="background:var(--panel2);border:1px solid #e8b84b44;border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:8px;letter-spacing:0.06em">OPTION A — iCal Feed (add multiple jobs)</div>
+          <div id="roster-feed-list" style="margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input class="cp-input" id="roster-ical" placeholder="webcal:// or https://..." style="flex:1"/>
+            <input class="cp-input" id="roster-ical-name" placeholder="Job name" style="width:120px"/>
+          </div>
+          <button class="btn-red" onclick="addRosterFeed()" style="font-size:11px;padding:7px 14px">+ Add Work Calendar</button>
         </div>
+
+        <!-- Manual entry -->
         <div style="font-size:10px;font-weight:800;color:var(--gold);margin-bottom:8px;letter-spacing:0.06em">OPTION B — Manual Entry</div>
         <div id="shift-entries"></div>
         <div class="btn-row">
           <button class="btn-ghost" onclick="addShiftRow()">+ Add Shift</button>
-          <button class="btn-red" onclick="saveShifts()">Save Roster</button>
+          <button class="btn-red" onclick="saveShifts()">Save Manual Shifts</button>
         </div>
         <div id="roster-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:8px"></div>
       </div>
@@ -1063,6 +1071,7 @@ function initPanelLogic() {
   // Re-render data if already loaded
   renderCalendar(); renderCanvas(); renderRoster(); renderLinks(); renderWeek24(); renderTodosWidget(); renderHabitsWidget();
   renderCalFeedList(); renderGcalColorPicker();
+  renderRosterFeedList();
   // Restore canvas ical url
   const savedCanvasIcal = localStorage.getItem('nexus_canvas_ical');
   if (savedCanvasIcal && document.getElementById('canvas-ical-url')) document.getElementById('canvas-ical-url').value = savedCanvasIcal;
@@ -1101,6 +1110,11 @@ function onDrop(e) {
   layout.splice(tgtIdx, 0, removed);
   saveLayout();
  
+// Restore roster feeds
+if (rosterFeeds.length) {
+  rebuildShiftsFromFeeds();
+}
+
 // Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
 (function migrateOldFeed() {
   const oldUrl = localStorage.getItem('nexus_gcal_ical');
@@ -1141,6 +1155,11 @@ function toggleEditMode() {
 function setSpan(id, span) {
   const item = layout.find(l => l.id === id);
   if (item) { item.span = span; saveLayout();
+// Restore roster feeds
+if (rosterFeeds.length) {
+  rebuildShiftsFromFeeds();
+}
+
 // Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
 (function migrateOldFeed() {
   const oldUrl = localStorage.getItem('nexus_gcal_ical');
@@ -1163,6 +1182,11 @@ renderSidebarNav(); }
 function hidePanel(id) {
   const item = layout.find(l => l.id === id);
   if (item) { item.hidden = true; saveLayout();
+// Restore roster feeds
+if (rosterFeeds.length) {
+  rebuildShiftsFromFeeds();
+}
+
 // Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
 (function migrateOldFeed() {
   const oldUrl = localStorage.getItem('nexus_gcal_ical');
@@ -1185,6 +1209,11 @@ renderSidebarNav(); }
 function restorePanel(id) {
   const item = layout.find(l => l.id === id);
   if (item) { item.hidden = false; saveLayout();
+// Restore roster feeds
+if (rosterFeeds.length) {
+  rebuildShiftsFromFeeds();
+}
+
 // Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
 (function migrateOldFeed() {
   const oldUrl = localStorage.getItem('nexus_gcal_ical');
@@ -1208,6 +1237,11 @@ function resetLayout() {
   layout = DEFAULT_LAYOUT.map(l => ({...l}));
   saveLayout();
  
+// Restore roster feeds
+if (rosterFeeds.length) {
+  rebuildShiftsFromFeeds();
+}
+
 // Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
 (function migrateOldFeed() {
   const oldUrl = localStorage.getItem('nexus_gcal_ical');
@@ -1313,13 +1347,9 @@ async function addCalendarFeed() {
   const name = document.getElementById('gcal-ical-name').value.trim() || 'Calendar ' + (calFeeds.length+1);
   const fb = document.getElementById('gcal-feedback');
   if (!url) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Paste an iCal URL first'; return; }
-  fb.style.color='var(--blue)'; fb.textContent=`⏳ Loading ${name}...`;
-  const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+  fb.style.color='var(--blue)'; fb.textContent=`⏳ Trying to load "${name}"...`;
   try {
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    if (!text.includes('BEGIN:VCALENDAR')) throw new Error('Not a valid iCal feed');
+    const text = await proxyFetch(url);
     const events = parseIcal(text);
     // Remove existing feed with same url if re-adding
     const existing = calFeeds.findIndex(f => f.url === url);
@@ -1345,12 +1375,8 @@ async function loadCanvasIcal() {
   const fb  = document.getElementById('canvas-feedback');
   if (!url) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Paste your Canvas iCal URL'; return; }
   fb.style.color='var(--purple)'; fb.textContent='⏳ Loading Canvas feed...';
-  const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
   try {
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    if (!text.includes('BEGIN:VCALENDAR')) throw new Error('Not a valid iCal feed — check your URL');
+    const text = await proxyFetch(url);
     // Parse all events, filter to those with assignments (Canvas uses SUMMARY for assignment names)
     const allEvents = parseIcal(text);
     // Canvas iCal: assignments show up with due date as DTSTART
@@ -1590,6 +1616,28 @@ function updateStats() {
   const sh=document.getElementById('stat-hours');       if(sh) sh.textContent=totalHrs.toFixed(1);
 }
 
+// ─── PROXY FETCH (tries multiple CORS proxies) ───────────────────────────────
+async function proxyFetch(url) {
+  // Normalise webcal:// → https://
+  url = url.replace(/^webcal:\/\//i, 'https://');
+  const proxies = [
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://cors-anywhere.herokuapp.com/${u}`,
+  ];
+  let lastErr = null;
+  for (const proxy of proxies) {
+    try {
+      const res = await fetch(proxy(url), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      if (text.includes('BEGIN:VCALENDAR')) return text;
+      throw new Error('Not a valid iCal feed');
+    } catch(e) { lastErr = e; }
+  }
+  throw new Error(lastErr?.message || 'All proxies failed — check your URL');
+}
+
 // ─── ICAL PARSER ─────────────────────────────────────────────────────────────
 function parseIcal(text) {
   const events = [];
@@ -1766,12 +1814,91 @@ function addShiftRow(date='',start='',end='') {
 function saveShifts() {
   const rows=document.querySelectorAll('#shift-entries .shift-input-row'); const shifts=[];
   rows.forEach(row=>{const[d,s,e]=row.querySelectorAll('input'); if(d.value&&s.value&&e.value) shifts.push({date:d.value.trim(),start:s.value.trim(),end:e.value.trim()});});
-  S.shifts=shifts; localStorage.setItem('nexus_shifts',JSON.stringify(shifts));
+  shifts.forEach(s => s.manual = true);
+  S.shifts=[...shifts, ...(rosterFeeds||[]).flatMap(f=>f.shifts||[])];
+  localStorage.setItem('nexus_shifts',JSON.stringify(S.shifts));
   document.getElementById('roster-feedback').style.color='var(--green)';
   document.getElementById('roster-feedback').textContent=`✓ Saved ${shifts.length} shifts`;
   renderRoster(); buildWeekGrid(); updateStats();
 }
-function loadIcal(){document.getElementById('roster-feedback').style.color='var(--gold)';document.getElementById('roster-feedback').textContent='⚠ iCal needs a CORS-enabled URL.';}
+// ─── ROSTER ICAL FEEDS ───────────────────────────────────────────────────────
+let rosterFeeds = JSON.parse(localStorage.getItem('nexus_roster_feeds') || '[]');
+
+function saveRosterFeeds() { localStorage.setItem('nexus_roster_feeds', JSON.stringify(rosterFeeds)); }
+
+function renderRosterFeedList() {
+  const el = document.getElementById('roster-feed-list');
+  if (!el) return;
+  if (!rosterFeeds.length) {
+    el.innerHTML = `<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);padding:4px 0">No work calendars connected yet</div>`;
+    return;
+  }
+  el.innerHTML = rosterFeeds.map((f,i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel3);border-radius:10px;margin-bottom:6px;border:1px solid var(--border)">
+      <span style="font-size:14px">⏰</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-mid);flex:1">${f.name}</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">${(f.shifts||[]).length} shifts</span>
+      <button onclick="removeRosterFeed(${i})"
+        style="background:#e8354a22;border:1px solid #e8354a44;color:var(--red-soft);cursor:pointer;font-size:10px;padding:3px 8px;border-radius:6px;font-family:'Share Tech Mono',monospace">
+        UNLINK
+      </button>
+    </div>`).join('');
+}
+
+function removeRosterFeed(i) {
+  rosterFeeds.splice(i,1); saveRosterFeeds();
+  rebuildShiftsFromFeeds();
+  renderRosterFeedList(); renderRoster(); buildWeekGrid(); updateStats();
+}
+
+function rebuildShiftsFromFeeds() {
+  // Merge iCal shifts with manual shifts
+  const icalShifts = rosterFeeds.flatMap(f => f.shifts||[]);
+  const manualShifts = S.shifts.filter(s => s.manual);
+  S.shifts = [...icalShifts, ...manualShifts];
+  localStorage.setItem('nexus_shifts', JSON.stringify(S.shifts));
+}
+
+async function addRosterFeed() {
+  const url  = document.getElementById('roster-ical').value.trim();
+  const name = document.getElementById('roster-ical-name').value.trim() || 'Work Calendar ' + (rosterFeeds.length+1);
+  const fb   = document.getElementById('roster-feedback');
+  if (!url) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Paste a calendar URL first'; return; }
+  fb.style.color='var(--gold)'; fb.textContent=`⏳ Loading "${name}"...`;
+  try {
+    const text = await proxyFetch(url);
+    const events = parseIcal(text);
+    // Convert calendar events to shifts format
+    const shifts = events
+      .filter(e => e.date && e.time)
+      .map(e => ({
+        date:  e.date,
+        start: e.time,
+        end:   e.endTime || addHours(e.time, 4),
+        label: e.title,
+        source: name,
+      }));
+    const existing = rosterFeeds.findIndex(f => f.url === url);
+    const feed = { url, name, shifts };
+    if (existing >= 0) rosterFeeds[existing] = feed; else rosterFeeds.push(feed);
+    saveRosterFeeds();
+    rebuildShiftsFromFeeds();
+    document.getElementById('roster-ical').value = '';
+    document.getElementById('roster-ical-name').value = '';
+    fb.style.color='var(--green)'; fb.textContent=`✓ ${name}: loaded ${shifts.length} shifts`;
+    renderRosterFeedList(); renderRoster(); buildWeekGrid(); updateStats();
+  } catch(e) {
+    fb.style.color='var(--red-soft)'; fb.textContent='✕ ' + e.message;
+  }
+}
+
+function addHours(time, h) {
+  const [hh,mm] = time.split(':').map(Number);
+  const total = hh*60+mm + h*60;
+  return String(Math.floor(total/60)%24).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+}
+
+function loadIcal() { addRosterFeed(); }
 function renderRoster() {
   const body=document.getElementById('roster-body');
   if(!body||!S.shifts.length) return;
@@ -2198,6 +2325,11 @@ function skipPomo(){clearInterval(pomoState.interval);pomoState.running=false;on
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
+// Restore roster feeds
+if (rosterFeeds.length) {
+  rebuildShiftsFromFeeds();
+}
+
 // Migrate old single-feed ical (nexus_gcal_ical) to new multi-feed system
 (function migrateOldFeed() {
   const oldUrl = localStorage.getItem('nexus_gcal_ical');
