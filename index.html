@@ -1429,14 +1429,14 @@ function renderWeek24() {
   const baseDate = new Date();
   baseDate.setDate(baseDate.getDate() + weekOffset * 7);
   const dow = baseDate.getDay();
-  const mon = new Date(baseDate); mon.setDate(baseDate.getDate() - ((dow+6)%7));
-  const days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
-  const today = new Date().toISOString().split('T')[0];
+  const mon = new Date(baseDate); mon.setDate(baseDate.getDate() - dow);
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const todayReal = new Date().toISOString().split('T')[0];
 
   // Build week days
   const weekDays = Array.from({length:7}, (_,i) => {
     const d = new Date(mon); d.setDate(mon.getDate()+i);
-    return { d, dateStr: d.toISOString().split('T')[0], label: days[i], isToday: d.toISOString().split('T')[0] === today };
+    return { d, dateStr: d.toISOString().split('T')[0], label: days[i], isToday: d.toISOString().split('T')[0] === todayReal };
   });
 
   // Update week range
@@ -1530,7 +1530,7 @@ function renderWeek24() {
   if (weekOffset === 0) {
     const now = new Date();
     const nowH = now.getHours() + now.getMinutes()/60;
-    if (nowH >= HOUR_START && nowH < HOUR_END) {
+    if (weekOffset === 0 && nowH >= HOUR_START && nowH < HOUR_END) {
       const topPx = (nowH - HOUR_START) * HOUR_PX;
       const todayIdx = weekDays.findIndex(d => d.isToday);
       if (todayIdx >= 0) {
@@ -1556,7 +1556,7 @@ function buildWeekGrid() {
   if (!grid) return;
   const today = new Date();
   const dow = today.getDay();
-  const mon = new Date(today); mon.setDate(today.getDate() - ((dow + 6) % 7));
+  const mon = new Date(today); mon.setDate(today.getDate() - dow);
   const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   grid.innerHTML = '';
   let ws = null, we = null;
@@ -1580,7 +1580,7 @@ function buildWeekGridPips() {
   if (!grid) return;
   const today = new Date();
   const dow = today.getDay();
-  const mon = new Date(today); mon.setDate(today.getDate() - ((dow + 6) % 7));
+  const mon = new Date(today); mon.setDate(today.getDate() - dow);
   const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   grid.innerHTML = '';
   let ws = null, we = null;
@@ -1608,7 +1608,7 @@ function updateStats() {
   const assignsDue  = S.assignments.filter(a => { const d = new Date(a.due), n = new Date(); return (d-n)/(864e5) >= 0 && (d-n)/(864e5) <= 7; }).length;
   let totalHrs = 0;
   const now = new Date(), dow = now.getDay();
-  const mon = new Date(now); mon.setDate(now.getDate()-((dow+6)%7));
+  const mon = new Date(now); mon.setDate(now.getDate()-dow);
   const sun = new Date(mon); sun.setDate(mon.getDate()+6);
   S.shifts.forEach(s => { const sd=new Date(s.date); if(sd>=mon&&sd<=sun){const[sh,sm]=s.start.split(':').map(Number),[eh,em]=s.end.split(':').map(Number); totalHrs+=(eh*60+em-sh*60-sm)/60;} });
   const se=document.getElementById('stat-events');     if(se) se.textContent=eventsToday;
@@ -1673,6 +1673,16 @@ function parseIcal(text) {
         if (!isNaN(d)) {
           current.date = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
           current.time = d.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12: false });
+        }
+      }
+    } else if (key === 'DTEND') {
+      if (val.length > 8) {
+        const d = new Date(
+          val.includes('Z') ? val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, '$1-$2-$3T$4:$5:$6Z')
+                             : val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/, '$1-$2-$3T$4:$5:$6')
+        );
+        if (!isNaN(d)) {
+          current.endTime = d.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12: false });
         }
       }
     } else if (key === 'LOCATION') {
