@@ -324,6 +324,7 @@ body {
 .due-urgent { background: #e8354a33; color: var(--red-soft); border: 1px solid #e8354a55; }
 .due-soon   { background: #e8b84b22; color: var(--gold);     border: 1px solid #e8b84b44; }
 .due-ok     { background: #4ade8022; color: var(--green);    border: 1px solid #4ade8044; }
+.due-past   { background: #44444422; color: #888;              border: 1px solid #44444455; }
 .assign-name { font-size: 12px; font-weight: 700; color: var(--white); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .assign-course { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text-dim); }
 .assign-pts { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
@@ -797,9 +798,14 @@ body {
         <div style="background:var(--panel2);border:1px solid #e8b84b44;border-radius:10px;padding:14px;margin-bottom:14px">
           <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:8px;letter-spacing:0.06em">OPTION A — iCal Feed (add multiple jobs)</div>
           <div id="roster-feed-list" style="margin-bottom:8px"></div>
-          <div style="display:flex;gap:6px;margin-bottom:6px">
-            <input class="cp-input" id="roster-ical" placeholder="webcal:// or https://..." style="flex:1"/>
-            <input class="cp-input" id="roster-ical-name" placeholder="Job name" style="width:120px"/>
+          <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+            <input class="cp-input" id="roster-ical" placeholder="webcal:// or https://..." style="flex:1;min-width:140px"/>
+            <input class="cp-input" id="roster-ical-name" placeholder="Job name" style="width:110px"/>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="color" id="roster-ical-color" value="#e8b84b"
+                style="-webkit-appearance:none;width:32px;height:32px;border:2px solid var(--border);border-radius:8px;background:none;cursor:pointer;padding:2px;flex-shrink:0"/>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">colour</span>
+            </div>
           </div>
           <button class="btn-red" onclick="addRosterFeed()" style="font-size:11px;padding:7px 14px">+ Add Work Calendar</button>
         </div>
@@ -1029,9 +1035,8 @@ function buildPomoHTML() {
           <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--text-dim);margin-top:1px">STREAK</div>
         </div>
       </div>
-      <div id="pomo-log" style="margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);min-height:14px"></div>
-    </div>
-  </div>`;
+      <div id="pomo-log" style="margin-top:4px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);min-height:12px;text-align:center"></div>
+    </div>`;
 }
 
 function buildTaxHTML() {
@@ -1889,7 +1894,7 @@ function renderCanvas() {
   S.assignments.slice(0,8).forEach(a=>{
     const due=new Date(a.due), diff=(due-today)/864e5;
     let cls='due-ok',txt=Math.ceil(diff)+'D';
-    if(diff<0){cls='due-ok';txt='PAST DUE';}else if(diff<=1){cls='due-urgent';txt='TODAY';}else if(diff<=3){cls='due-urgent';txt=Math.ceil(diff)+'D';}else if(diff<=7){cls='due-soon';}
+    if(diff<0){cls='due-past';txt='PAST DUE';}else if(diff<=1){cls='due-urgent';txt='TODAY';}else if(diff<=3){cls='due-urgent';txt=Math.ceil(diff)+'D';}else if(diff<=7){cls='due-soon';}
     const isSubmitted = a.submitted || (S.submittedAssignments||{})[a.name+a.due];
     if (isSubmitted) { cls='due-ok'; txt='DONE'; }
     html+=`<li class="assign-item${isSubmitted?' done-item':''}">
@@ -1951,7 +1956,7 @@ function renderRosterFeedList() {
   }
   el.innerHTML = rosterFeeds.map((f,i) => `
     <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel3);border-radius:10px;margin-bottom:6px;border:1px solid var(--border)">
-      <span style="font-size:14px">⏰</span>
+      <div style="width:10px;height:10px;border-radius:50%;background:${f.color||'#e8b84b'};flex-shrink:0"></div>
       <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-mid);flex:1">${f.name}</span>
       <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">${(f.shifts||[]).length} shifts</span>
       <button onclick="removeRosterFeed(${i})"
@@ -1976,8 +1981,9 @@ function rebuildShiftsFromFeeds() {
 }
 
 async function addRosterFeed() {
-  const url  = document.getElementById('roster-ical').value.trim();
-  const name = document.getElementById('roster-ical-name').value.trim() || 'Work Calendar ' + (rosterFeeds.length+1);
+  const url   = document.getElementById('roster-ical').value.trim();
+  const name  = document.getElementById('roster-ical-name').value.trim() || 'Work Calendar ' + (rosterFeeds.length+1);
+  const color = document.getElementById('roster-ical-color')?.value || '#e8b84b';
   const fb   = document.getElementById('roster-feedback');
   if (!url) { fb.style.color='var(--red-soft)'; fb.textContent='⚠ Paste a calendar URL first'; return; }
   fb.style.color='var(--gold)'; fb.textContent=`⏳ Loading "${name}"...`;
@@ -1993,9 +1999,10 @@ async function addRosterFeed() {
         end:   e.endTime || addHours(e.time, 4),
         label: e.title,
         source: name,
+        color,
       }));
     const existing = rosterFeeds.findIndex(f => f.url === url);
-    const feed = { url, name, shifts };
+    const feed = { url, name, color, shifts };
     if (existing >= 0) rosterFeeds[existing] = feed; else rosterFeeds.push(feed);
     saveRosterFeeds();
     rebuildShiftsFromFeeds();
@@ -2026,7 +2033,8 @@ function renderRoster() {
     const d=new Date(s.date), dayStr=d.toLocaleDateString('en-AU',{day:'2-digit',month:'short'});
     const[sh,sm]=s.start.split(':').map(Number),[eh,em]=s.end.split(':').map(Number);
     const hrs=((eh*60+em)-(sh*60+sm))/60;
-    html+=`<li class="shift-item"><span class="shift-day-badge">${d.toLocaleDateString('en-AU',{weekday:'short'}).toUpperCase()}</span><div class="shift-info"><div class="shift-time-text">${s.start} → ${s.end}</div><div class="shift-date-text">${dayStr}</div></div><span class="shift-hrs">${hrs.toFixed(1)}h</span></li>`;
+    const sc = s.color || '#e8b84b';
+    html+=`<li class="shift-item"><span class="shift-day-badge" style="color:${sc};background:${sc}18;border-color:${sc}44">${d.toLocaleDateString('en-AU',{weekday:'short'}).toUpperCase()}</span><div class="shift-info"><div class="shift-time-text">${s.start} → ${s.end}</div><div class="shift-date-text">${dayStr}${s.source?' · '+s.source:''}</div></div><span class="shift-hrs">${hrs.toFixed(1)}h</span></li>`;
   });
   body.innerHTML=html+'</ul>';
 }
