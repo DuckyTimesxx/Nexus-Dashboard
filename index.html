@@ -1155,12 +1155,42 @@ if (rosterFeeds.length) {
   }
 })();
 
+// Parser version — bump this to force re-fetch of all cached feeds
+const PARSER_VERSION = 3;
+const cachedParserVersion = parseInt(localStorage.getItem('nexus_parser_v') || '0');
+
+async function refreshAllFeeds() {
+  // Re-fetch and re-parse all calendar feeds with the new parser
+  const fb = document.getElementById('gcal-feedback');
+  let refreshed = 0;
+  for (let i = 0; i < calFeeds.length; i++) {
+    const f = calFeeds[i];
+    if (!f.url) continue;
+    try {
+      const text = await proxyFetch(f.url);
+      calFeeds[i].events = parseIcal(text);
+      refreshed++;
+    } catch(e) { console.warn('Could not refresh', f.name, e); }
+  }
+  if (refreshed > 0) {
+    saveCalFeeds();
+    localStorage.setItem('nexus_parser_v', PARSER_VERSION);
+    S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+    renderCalendar(); renderWeek24(); buildWeekGrid(); updateStats();
+  }
+}
+
 // Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
 renderSidebarNav();
+
+// If parser version changed, silently re-fetch all feeds in background
+if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
+  setTimeout(refreshAllFeeds, 1500);
+}
 }
 function onDragEnd() {
   document.querySelectorAll('.panel-wrap').forEach(el => {
@@ -1200,12 +1230,42 @@ if (rosterFeeds.length) {
   }
 })();
 
+// Parser version — bump this to force re-fetch of all cached feeds
+const PARSER_VERSION = 3;
+const cachedParserVersion = parseInt(localStorage.getItem('nexus_parser_v') || '0');
+
+async function refreshAllFeeds() {
+  // Re-fetch and re-parse all calendar feeds with the new parser
+  const fb = document.getElementById('gcal-feedback');
+  let refreshed = 0;
+  for (let i = 0; i < calFeeds.length; i++) {
+    const f = calFeeds[i];
+    if (!f.url) continue;
+    try {
+      const text = await proxyFetch(f.url);
+      calFeeds[i].events = parseIcal(text);
+      refreshed++;
+    } catch(e) { console.warn('Could not refresh', f.name, e); }
+  }
+  if (refreshed > 0) {
+    saveCalFeeds();
+    localStorage.setItem('nexus_parser_v', PARSER_VERSION);
+    S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+    renderCalendar(); renderWeek24(); buildWeekGrid(); updateStats();
+  }
+}
+
 // Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
-renderSidebarNav(); }
+renderSidebarNav();
+
+// If parser version changed, silently re-fetch all feeds in background
+if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
+  setTimeout(refreshAllFeeds, 1500);
+} }
 }
 
 function hidePanel(id) {
@@ -1227,12 +1287,42 @@ if (rosterFeeds.length) {
   }
 })();
 
+// Parser version — bump this to force re-fetch of all cached feeds
+const PARSER_VERSION = 3;
+const cachedParserVersion = parseInt(localStorage.getItem('nexus_parser_v') || '0');
+
+async function refreshAllFeeds() {
+  // Re-fetch and re-parse all calendar feeds with the new parser
+  const fb = document.getElementById('gcal-feedback');
+  let refreshed = 0;
+  for (let i = 0; i < calFeeds.length; i++) {
+    const f = calFeeds[i];
+    if (!f.url) continue;
+    try {
+      const text = await proxyFetch(f.url);
+      calFeeds[i].events = parseIcal(text);
+      refreshed++;
+    } catch(e) { console.warn('Could not refresh', f.name, e); }
+  }
+  if (refreshed > 0) {
+    saveCalFeeds();
+    localStorage.setItem('nexus_parser_v', PARSER_VERSION);
+    S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+    renderCalendar(); renderWeek24(); buildWeekGrid(); updateStats();
+  }
+}
+
 // Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
-renderSidebarNav(); }
+renderSidebarNav();
+
+// If parser version changed, silently re-fetch all feeds in background
+if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
+  setTimeout(refreshAllFeeds, 1500);
+} }
 }
 
 function restorePanel(id) {
@@ -1254,12 +1344,42 @@ if (rosterFeeds.length) {
   }
 })();
 
+// Parser version — bump this to force re-fetch of all cached feeds
+const PARSER_VERSION = 3;
+const cachedParserVersion = parseInt(localStorage.getItem('nexus_parser_v') || '0');
+
+async function refreshAllFeeds() {
+  // Re-fetch and re-parse all calendar feeds with the new parser
+  const fb = document.getElementById('gcal-feedback');
+  let refreshed = 0;
+  for (let i = 0; i < calFeeds.length; i++) {
+    const f = calFeeds[i];
+    if (!f.url) continue;
+    try {
+      const text = await proxyFetch(f.url);
+      calFeeds[i].events = parseIcal(text);
+      refreshed++;
+    } catch(e) { console.warn('Could not refresh', f.name, e); }
+  }
+  if (refreshed > 0) {
+    saveCalFeeds();
+    localStorage.setItem('nexus_parser_v', PARSER_VERSION);
+    S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+    renderCalendar(); renderWeek24(); buildWeekGrid(); updateStats();
+  }
+}
+
 // Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
-renderSidebarNav(); }
+renderSidebarNav();
+
+// If parser version changed, silently re-fetch all feeds in background
+if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
+  setTimeout(refreshAllFeeds, 1500);
+} }
 }
 
 function resetLayout() {
@@ -1282,12 +1402,42 @@ if (rosterFeeds.length) {
   }
 })();
 
+// Parser version — bump this to force re-fetch of all cached feeds
+const PARSER_VERSION = 3;
+const cachedParserVersion = parseInt(localStorage.getItem('nexus_parser_v') || '0');
+
+async function refreshAllFeeds() {
+  // Re-fetch and re-parse all calendar feeds with the new parser
+  const fb = document.getElementById('gcal-feedback');
+  let refreshed = 0;
+  for (let i = 0; i < calFeeds.length; i++) {
+    const f = calFeeds[i];
+    if (!f.url) continue;
+    try {
+      const text = await proxyFetch(f.url);
+      calFeeds[i].events = parseIcal(text);
+      refreshed++;
+    } catch(e) { console.warn('Could not refresh', f.name, e); }
+  }
+  if (refreshed > 0) {
+    saveCalFeeds();
+    localStorage.setItem('nexus_parser_v', PARSER_VERSION);
+    S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+    renderCalendar(); renderWeek24(); buildWeekGrid(); updateStats();
+  }
+}
+
 // Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
 renderSidebarNav();
+
+// If parser version changed, silently re-fetch all feeds in background
+if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
+  setTimeout(refreshAllFeeds, 1500);
+}
 }
 
 function updateHiddenTray() {
@@ -2539,12 +2689,42 @@ if (rosterFeeds.length) {
   }
 })();
 
+// Parser version — bump this to force re-fetch of all cached feeds
+const PARSER_VERSION = 3;
+const cachedParserVersion = parseInt(localStorage.getItem('nexus_parser_v') || '0');
+
+async function refreshAllFeeds() {
+  // Re-fetch and re-parse all calendar feeds with the new parser
+  const fb = document.getElementById('gcal-feedback');
+  let refreshed = 0;
+  for (let i = 0; i < calFeeds.length; i++) {
+    const f = calFeeds[i];
+    if (!f.url) continue;
+    try {
+      const text = await proxyFetch(f.url);
+      calFeeds[i].events = parseIcal(text);
+      refreshed++;
+    } catch(e) { console.warn('Could not refresh', f.name, e); }
+  }
+  if (refreshed > 0) {
+    saveCalFeeds();
+    localStorage.setItem('nexus_parser_v', PARSER_VERSION);
+    S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
+    renderCalendar(); renderWeek24(); buildWeekGrid(); updateStats();
+  }
+}
+
 // Restore cal feeds — rebuild combined events from stored feeds
 if (calFeeds.length) {
   S.calEvents = calFeeds.flatMap(f => (f.events||[]).map(e => ({...e, calColor: f.color, calName: f.name})));
 }
 renderGrid();
 renderSidebarNav();
+
+// If parser version changed, silently re-fetch all feeds in background
+if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
+  setTimeout(refreshAllFeeds, 1500);
+}
 </script>
 <!-- LINKS MODAL -->
 <div class="modal-overlay" id="linksModal">
