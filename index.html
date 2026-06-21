@@ -140,7 +140,8 @@ body {
 /* ── SCROLL CONTENT ── */
 .content {
   flex: 1; overflow-y: auto; overflow-x: hidden;
-  padding: 20px 24px 60px;
+  padding: 20px 20px 60px;
+  min-width: 0;
 }
 
 /* ── MODULAR GRID ── */
@@ -149,7 +150,13 @@ body {
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   align-items: start;
+  min-width: 0;
+  max-width: 100%;
 }
+
+/* Prevent any panel from overflowing */
+.panel-wrap, .card { min-width: 0; max-width: 100%; }
+.card-body { min-width: 0; overflow-x: hidden; }
 
 /* ── PANEL WRAPPER (draggable) ── */
 .panel-wrap {
@@ -1436,9 +1443,9 @@ const HOUR_PX    = 40; // px per hour
 
 function buildWeekViewHTML() {
   return `
-    <div class="week24-allday-row" id="week24-allday-row" style="display:grid;grid-template-columns:44px repeat(7,1fr);min-width:600px;border-bottom:1px solid var(--border)">
-      <div style="border-right:1px solid var(--border);padding:4px 2px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-dim);display:flex;align-items:center;justify-content:center">ALL</div>
-      ${Array.from({length:7},(_,i)=>`<div id="allday-col-${i}" style="border-right:1px solid var(--border);min-height:20px;padding:2px 2px;position:relative"></div>`).join('')}
+    <div class="week24-allday-row" id="week24-allday-row" style="display:grid;grid-template-columns:44px repeat(7,1fr);min-width:600px;border-bottom:1px solid var(--border);position:relative;align-items:start;">
+      <div style="grid-column:1;grid-row:1;border-right:1px solid var(--border);padding:4px 2px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-dim);display:flex;align-items:center;justify-content:center;z-index:1">ALL</div>
+      ${Array.from({length:7},(_,i)=>`<div id="allday-col-${i}" style="grid-column:${i+2};grid-row:1;border-right:1px solid var(--border);min-height:22px;"></div>`).join('')}
     </div>
     <div class="week24-wrap" id="week24-wrap">
       <div class="week24-body" id="week24-body" style="display:grid;grid-template-columns:44px repeat(7,1fr);min-width:600px;position:relative"></div>
@@ -1507,7 +1514,7 @@ function renderWeek24() {
     const col = di + 2;
     // Timed events for this day
     const timedEvents = [];
-    S.calEvents.filter(e => e.date === day.dateStr && e.time && !e.allDay).forEach(e => {
+    S.calEvents.filter(e => e.date === day.dateStr && e.time && !e.allDay && !(e.endDate && e.endDate > e.date && !e.time)).forEach(e => {
       timedEvents.push({ title: e.title, time: e.time, endTime: e.endTime, color: e.calColor || '#60a5fa' });
     });
     S.shifts.filter(s => s.date === day.dateStr).forEach(s => {
@@ -1587,42 +1594,81 @@ function renderWeek24() {
     return e.endDate && e.endDate > e.date;
   });
 
+  // Group multi-day events by track (row) to avoid overlap
+  const tracks = []; // each track is array of {ev, si, ei}
+  const placed = [];
+
   allDayEvents.forEach(ev => {
     const evStart = ev.date;
     const evEnd   = ev.endDate || ev.date;
-    // Check overlap with this week
     if (evEnd < weekStartStr || evStart > weekEndStr) return;
     const clipStart = evStart < weekStartStr ? weekStartStr : evStart;
     const clipEnd   = evEnd   > weekEndStr   ? weekEndStr   : evEnd;
-    const startIdx  = weekDays.findIndex(d => d.dateStr === clipStart);
-    const endIdx    = weekDays.findIndex(d => d.dateStr === clipEnd);
-    if (startIdx === -1 && endIdx === -1) return;
-    const si = startIdx === -1 ? 0 : startIdx;
-    const ei = endIdx   === -1 ? 6 : endIdx;
+    let si = weekDays.findIndex(d => d.dateStr === clipStart);
+    let ei = weekDays.findIndex(d => d.dateStr === clipEnd);
+    if (si === -1) si = 0;
+    if (ei === -1) ei = 6;
+    // Find a free track
+    let track = 0;
+    while (tracks[track] && tracks[track].some(p => !(p.ei < si || p.si > ei))) track++;
+    if (!tracks[track]) tracks[track] = [];
+    tracks[track].push({ ev, si, ei });
+    placed.push({ ev, si, ei, track });
+  });
+
+  // Render using the allday-row as a relative container with absolute pills
+  const alldayRow = document.getElementById('week24-allday-row');
+  if (!alldayRow) return;
+
+  // Clear existing pills (keep the header cell and day columns structure)
+  alldayRow.querySelectorAll('.allday-pill').forEach(el => el.remove());
+
+  // Set allday row height based on track count
+  const trackH = 22;
+  const rowH = Math.max(trackH, (tracks.length || 1) * trackH + 4);
+  for (let i = 0; i < 7; i++) {
+    const el = document.getElementById(`allday-col-${i}`);
+    if (el) el.style.minHeight = rowH + 'px';
+  }
+
+  // Each pill needs to span columns — use the allday-row grid positions
+  // We get the bounding rects of the day columns to position pills
+  placed.forEach(({ ev, si, ei, track }) => {
+    const startCol = document.getElementById(`allday-col-${si}`);
+    const endCol   = document.getElementById(`allday-col-${ei}`);
+    if (!startCol || !endCol) return;
+
     const col = ev.calColor || '#60a5fa';
-    const isStart = evStart >= weekStartStr;
-    const isEnd   = evEnd   <= weekEndStr;
-    // Render a pill spanning from si to ei in the allday row
-    for (let i = si; i <= ei; i++) {
-      const el = document.getElementById(`allday-col-${i}`);
-      if (!el) continue;
-      const pill = document.createElement('div');
-      pill.style.cssText = `
-        background:${col}33;
-        border-top:2px solid ${col};
-        border-bottom:2px solid ${col};
-        ${i===si && isStart ? `border-left:3px solid ${col};border-radius:4px 0 0 4px;padding-left:4px;` : 'border-left:none;padding-left:2px;'}
-        ${i===ei && isEnd   ? `border-right:3px solid ${col};border-radius:0 4px 4px 0;` : 'border-right:none;'}
-        color:var(--white);font-size:9px;font-weight:700;
-        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-        padding:2px 2px;margin:1px 0;line-height:1.4;
-        position:absolute;left:0;right:0;top:0;
-      `;
-      pill.title = ev.title;
-      pill.textContent = (i === si || i === 0) ? ev.title : '';
-      el.appendChild(pill);
-      el.style.minHeight = '22px';
-    }
+    const isStart = ev.date >= weekStartStr;
+    const isEnd   = (ev.endDate || ev.date) <= weekEndStr;
+
+    const pill = document.createElement('div');
+    pill.className = 'allday-pill';
+    // Use grid-column spanning — position within the allday-row grid
+    // grid col 1 = time label, cols 2-8 = days 0-6
+    pill.style.cssText = `
+      grid-column: ${si+2} / ${ei+3};
+      grid-row: 1;
+      background: ${col}33;
+      border: 1.5px solid ${col};
+      ${isStart ? `border-radius: 4px 0 0 4px;` : `border-left: none; border-radius: 0;`}
+      ${isEnd   ? `border-radius: ${isStart?'4px':'0'} 4px 4px ${isStart?'4px':'0'};` : `border-right: none;`}
+      color: var(--white);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+      align-self: start;
+      margin-top: ${track * trackH + 2}px;
+      z-index: 2;
+      cursor: default;
+    `;
+    pill.title = ev.title;
+    pill.textContent = ev.title;
+    alldayRow.appendChild(pill);
   });
 }
 
