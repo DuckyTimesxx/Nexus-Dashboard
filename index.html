@@ -1511,7 +1511,7 @@ function renderWeek24() {
       timedEvents.push({ title: e.title, time: e.time, endTime: e.endTime, color: e.calColor || '#60a5fa' });
     });
     S.shifts.filter(s => s.date === day.dateStr).forEach(s => {
-      timedEvents.push({ title: s.label || 'Work shift', time: s.start, endTime: s.end, color: '#e8b84b' });
+      timedEvents.push({ title: s.label || s.source || 'Work shift', time: s.start, endTime: s.end, color: s.color || '#e8b84b' });
     });
     S.assignments.filter(a => a.due === day.dateStr && a.time).forEach(a => {
       timedEvents.push({ title: a.name, time: a.time, endTime: null, color: '#a78bfa' });
@@ -1973,8 +1973,10 @@ function removeRosterFeed(i) {
 }
 
 function rebuildShiftsFromFeeds() {
-  // Merge iCal shifts with manual shifts
-  const icalShifts = rosterFeeds.flatMap(f => f.shifts||[]);
+  // Merge iCal shifts with manual shifts, stamping feed colour onto each shift
+  const icalShifts = rosterFeeds.flatMap(f =>
+    (f.shifts||[]).map(s => ({ ...s, color: s.color || f.color || '#e8b84b', source: s.source || f.name }))
+  );
   const manualShifts = S.shifts.filter(s => s.manual);
   S.shifts = [...icalShifts, ...manualShifts];
   localStorage.setItem('nexus_shifts', JSON.stringify(S.shifts));
