@@ -1461,7 +1461,7 @@ function shiftWeek(dir) {
 function renderWeek24() {
   const body = document.getElementById('week24-body');
   if (!body) return;
-  const isMultiDay = e => e.allDay || (e.endDate && e.endDate > e.date);
+  const isMultiDay = e => e.allDay || e.multiDay || (e.endDate && e.endDate > e.date);
 
   const baseDate = new Date();
   baseDate.setDate(baseDate.getDate() + weekOffset * 7);
@@ -1761,56 +1761,86 @@ async function proxyFetch(url) {
 function parseIcal(text) {
   const events = [];
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-    // unfold lines (lines starting with space/tab continue previous)
     .replace(/\n[ \t]/g, '').split('\n');
+
+  // Parse iCal datetime string, preserving LOCAL date/time without UTC conversion
+  // This is critical for timezone-aware events (TZID=...) which are already in local time
+  function parseIcalDT(val) {
+    // Date-only: 20260622
+    if (/^\d{8}$/.test(val)) {
+      return {
+        date: `${val.slice(0,4)}-${val.slice(4,6)}-${val.slice(6,8)}`,
+        time: null,
+        allDay: true
+      };
+    }
+    // DateTime with Z (UTC): 20260622T013000Z — convert to local
+    if (val.endsWith('Z')) {
+      const iso = val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, '$1-$2-$3T$4:$5:$6Z');
+      const d = new Date(iso);
+      if (isNaN(d)) return null;
+      // Use local date/time
+      const pad = n => String(n).padStart(2,'0');
+      return {
+        date: `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
+        time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+        allDay: false
+      };
+    }
+    // DateTime WITHOUT Z (local/TZID): 20260622T110000 — treat digits as-is, no UTC conversion
+    const m = val.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/);
+    if (m) {
+      return {
+        date: `${m[1]}-${m[2]}-${m[3]}`,
+        time: `${m[4]}:${m[5]}`,
+        allDay: false
+      };
+    }
+    return null;
+  }
 
   let inEvent = false, current = {};
   for (const line of lines) {
     if (line === 'BEGIN:VEVENT') { inEvent = true; current = {}; continue; }
     if (line === 'END:VEVENT') {
-      if (current.title && current.date) events.push(current);
+      if (current.title && current.date) {
+        // Mark as multi-day if end date differs from start date
+        if (current.endDate && current.endDate > current.date) {
+          current.multiDay = true;
+        }
+        events.push(current);
+      }
       inEvent = false; continue;
     }
     if (!inEvent) continue;
     const colon = line.indexOf(':');
     if (colon === -1) continue;
-    const key = line.slice(0, colon).split(';')[0].toUpperCase();
-    const val = line.slice(colon + 1).trim();
+    const key   = line.slice(0, colon).split(';')[0].toUpperCase();
+    const val   = line.slice(colon + 1).trim();
 
     if (key === 'SUMMARY') {
-      current.title = val.replace(/\\,/g, ',').replace(/\\n/g, ' ').replace(/\\;/g, ';');
+      current.title = val.replace(/\\,/g,',').replace(/\\n/g,' ').replace(/\\;/g,';');
     } else if (key === 'DTSTART') {
-      // Could be date-only (20250619) or datetime (20250619T090000Z or 20250619T090000)
-      if (val.length === 8) {
-        current.date = `${val.slice(0,4)}-${val.slice(4,6)}-${val.slice(6,8)}`;
-        current.time = null;
-      } else {
-        const d = new Date(
-          val.includes('Z') ? val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, '$1-$2-$3T$4:$5:$6Z')
-                             : val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/, '$1-$2-$3T$4:$5:$6')
-        );
-        if (!isNaN(d)) {
-          current.date = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
-          current.time = d.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12: false });
-        }
+      const dt = parseIcalDT(val);
+      if (dt) {
+        current.date    = dt.date;
+        current.time    = dt.time;
+        current.allDay  = dt.allDay;
       }
     } else if (key === 'DTEND') {
-      if (val.length === 8) {
-        // Date-only DTEND — all-day or multi-day event end
-        const yr=val.slice(0,4),mo=val.slice(4,6),dy=val.slice(6,8);
-        // iCal DTEND for all-day is exclusive, subtract 1 day
-        const endD = new Date(`${yr}-${mo}-${dy}`);
-        endD.setDate(endD.getDate()-1);
-        current.endDate = endD.toISOString().split('T')[0];
-        current.allDay = true;
+      if (/^\d{8}$/.test(val)) {
+        // Date-only end is exclusive — subtract 1 day
+        const yr=val.slice(0,4), mo=val.slice(4,6), dy=val.slice(6,8);
+        const endD = new Date(`${yr}-${mo}-${dy}T00:00:00`);
+        endD.setDate(endD.getDate() - 1);
+        const pad = n => String(n).padStart(2,'0');
+        current.endDate = `${endD.getFullYear()}-${pad(endD.getMonth()+1)}-${pad(endD.getDate())}`;
+        current.allDay  = true;
       } else {
-        const d = new Date(
-          val.includes('Z') ? val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, '$1-$2-$3T$4:$5:$6Z')
-                             : val.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/, '$1-$2-$3T$4:$5:$6')
-        );
-        if (!isNaN(d)) {
-          current.endTime = d.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12: false });
-          current.endDate = d.toISOString().split('T')[0];
+        const dt = parseIcalDT(val);
+        if (dt) {
+          current.endDate = dt.date;
+          current.endTime = dt.time;
         }
       }
     } else if (key === 'LOCATION') {
