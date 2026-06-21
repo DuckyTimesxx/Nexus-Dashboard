@@ -751,6 +751,22 @@ body {
       <button class="modal-close" onclick="closeSetup()">✕</button>
     </div>
     <div class="modal-body">
+      <div class="modal-section" id="section-branding">
+        <div class="modal-section-title" style="color:var(--gold)">✏️ Dashboard Name</div>
+        <div class="input-row">
+          <label class="input-label">TITLE (shown in hero + topbar)</label>
+          <input class="cp-input" id="branding-title" placeholder="FML Hub" style="font-size:16px;font-weight:800"/>
+        </div>
+        <div class="input-row">
+          <label class="input-label">SUBTITLE (shown under title)</label>
+          <input class="cp-input" id="branding-sub" placeholder="Mech Eng · Sem Break 2026"/>
+        </div>
+        <div class="btn-row">
+          <button class="btn-red" onclick="saveBranding()">Save</button>
+          <button class="btn-ghost" onclick="resetBranding()">Reset to default</button>
+        </div>
+      </div>
+
       <div class="modal-section" id="section-gcal">
         <div class="modal-section-title" style="color:var(--blue)">📅 Google Calendar</div>
 
@@ -760,7 +776,10 @@ body {
           <div class="setup-step"><span class="step-num">1.</span><span class="step-text">Open <strong style="color:var(--text)">Google Calendar</strong> on desktop → click the gear ⚙ → Settings</span></div>
           <div class="setup-step"><span class="step-num">2.</span><span class="step-text">Click your calendar name in the left sidebar → <strong style="color:var(--green)">Integrate calendar</strong></span></div>
           <div class="setup-step"><span class="step-num">3.</span><span class="step-text">Copy the <strong style="color:var(--green)">Secret address in iCal format</strong> link (starts with <code>https://calendar.google.com/calendar/ical/...</code>)</span></div>
-          <div class="setup-step"><span class="step-num">4.</span><span class="step-text">Paste it below and click Load — done, no login required</span></div>
+          <div class="setup-step"><span class="step-num">4.</span><span class="step-text">Paste it below and click Add Calendar — repeat for each calendar including shared ones</span></div>
+          <div style="background:var(--panel3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;font-size:11px;color:var(--text-dim);line-height:1.6">
+            <strong style="color:var(--text-mid)">📅 Shared calendars:</strong> someone shares a Google Calendar with you → open it in Google Calendar → Settings → find the shared calendar in the left sidebar → Integrate calendar → copy the iCal link. Works the same way.
+          </div>
           <div style="font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:0.06em;margin-bottom:6px">ADD CALENDARS (one per line or add multiple)</div>
           <div id="gcal-ical-list" style="margin-bottom:8px"></div>
           <div class="input-row"><label class="input-label">ICAL URL</label>
@@ -979,7 +998,7 @@ function buildPanelHTML(id, title) {
     'panel-cal':   `<div style="display:flex;gap:8px;align-items:center"><span id="gcal-status-tag"></span><button class="btn-ghost" onclick="shiftWeek(-1)" style="padding:4px 10px;font-size:12px">‹</button><span id="week-range" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)"></span><button class="btn-ghost" onclick="shiftWeek(1)" style="padding:4px 10px;font-size:12px">›</button><button class="btn-ghost" onclick="shiftWeek(0)" style="padding:4px 8px;font-size:10px">Today</button><button class="connect-pill red" onclick="openSetup('gcal')" style="margin-left:4px">+ Cal</button></div>`,
     'panel-uni':   `<span id="canvas-status-tag"></span>`,
     'panel-work':  `<button class="connect-pill gold" onclick="openSetup('roster')">+ Add Shift</button>`,
-    'panel-photos':`<div style="display:flex;gap:6px;align-items:center"><label class="connect-pill green" style="cursor:pointer">+ Add<input type="file" accept="image/*" multiple style="display:none" onchange="addPhotos(this)"/></label><select id="photo-interval-select" class="cp-select" onchange="setPhotoInterval(this.value)" style="font-size:10px;padding:3px 6px;border-radius:8px"><option value="2000">2s</option><option value="4000" selected>4s</option><option value="6000">6s</option><option value="10000">10s</option><option value="0">Manual</option></select></div>`,
+    'panel-photos':`<div style="display:flex;gap:6px;align-items:center"><button class="connect-pill green" onclick="openPhotoModal()">🖼 Manage</button><select id="photo-interval-select" class="cp-select" onchange="setPhotoInterval(this.value)" style="font-size:10px;padding:3px 6px;border-radius:8px"><option value="2000">2s</option><option value="4000" selected>4s</option><option value="6000">6s</option><option value="10000">10s</option><option value="0">Manual</option></select></div>`,
     'panel-notes': `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">AUTO-SAVE</span>`,
     'panel-tax':   `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">SA · TFT TOGGLE</span>`,
     'panel-pomo':  `<span id="pomo-session-label" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">FOCUS SESSION</span>`,
@@ -1207,6 +1226,7 @@ if (calFeeds.length) {
 }
 renderGrid();
 renderSidebarNav();
+loadBranding();
 
 // If parser version changed, silently re-fetch all feeds in background
 if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
@@ -1282,6 +1302,7 @@ if (calFeeds.length) {
 }
 renderGrid();
 renderSidebarNav();
+loadBranding();
 
 // If parser version changed, silently re-fetch all feeds in background
 if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
@@ -1339,6 +1360,7 @@ if (calFeeds.length) {
 }
 renderGrid();
 renderSidebarNav();
+loadBranding();
 
 // If parser version changed, silently re-fetch all feeds in background
 if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
@@ -1396,6 +1418,7 @@ if (calFeeds.length) {
 }
 renderGrid();
 renderSidebarNav();
+loadBranding();
 
 // If parser version changed, silently re-fetch all feeds in background
 if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
@@ -1454,6 +1477,7 @@ if (calFeeds.length) {
 }
 renderGrid();
 renderSidebarNav();
+loadBranding();
 
 // If parser version changed, silently re-fetch all feeds in background
 if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
@@ -2307,6 +2331,7 @@ function renderRoster() {
 // ─── MODAL ────────────────────────────────────────────────────────────────────
 function openSetup(section) {
   document.getElementById('setupModal').classList.add('active');
+  initBrandingFields();
   if(section){setTimeout(()=>{const el=document.getElementById('section-'+section);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100);}
   if(section==='roster'&&!document.querySelectorAll('#shift-entries .shift-input-row').length){S.shifts.forEach(s=>addShiftRow(s.date,s.start,s.end));if(!S.shifts.length)addShiftRow();}
 }
@@ -2317,6 +2342,8 @@ const linksModalEl = document.getElementById('linksModal');
 if (linksModalEl) linksModalEl.addEventListener('click',e=>{if(e.target===linksModalEl)closeLinksModal();});
 const renameModalEl = document.getElementById('rename-modal');
 if (renameModalEl) renameModalEl.addEventListener('click',e=>{if(e.target===renameModalEl)closeRenameModal();});
+const photoModalEl = document.getElementById('photoModal');
+if (photoModalEl) photoModalEl.addEventListener('click',e=>{if(e.target===photoModalEl)closePhotoModal();});
 
 // ─── TAX CALCULATOR (FY2025-26 · SA) ─────────────────────────────────────────
 const TAX_BRACKETS=[{min:0,max:18200,rate:0.00,base:0},{min:18201,max:45000,rate:0.16,base:0},{min:45001,max:135000,rate:0.30,base:4288},{min:135001,max:190000,rate:0.37,base:31288},{min:190001,max:Infinity,rate:0.45,base:51638}];
@@ -2503,7 +2530,9 @@ function openRenameModal(id) {
   const item = layout.find(l => l.id === id);
   const def  = PANEL_DEFS.find(d => d.id === id);
   const current = item?.customTitle || def?.title || '';
-  document.getElementById('rename-input').value = current.replace(/^[^ ]+ /,''); // strip emoji prefix
+  const emojiMatch = current.match(/^(\S+)\s/);
+  document.getElementById('rename-emoji').value = emojiMatch ? emojiMatch[1] : '';
+  document.getElementById('rename-input').value = current.replace(/^\S+\s/, '');
   document.getElementById('rename-modal').classList.add('active');
   setTimeout(() => document.getElementById('rename-input').select(), 100);
 }
@@ -2514,23 +2543,57 @@ function closeRenameModal() {
 }
 
 function applyRename() {
-  const val = document.getElementById('rename-input').value.trim();
-  if (!val || !renamingPanelId) { closeRenameModal(); return; }
+  const val   = document.getElementById('rename-input').value.trim();
+  const emoji = document.getElementById('rename-emoji').value.trim();
+  if (!renamingPanelId) { closeRenameModal(); return; }
   const item = layout.find(l => l.id === renamingPanelId);
   const def  = PANEL_DEFS.find(d => d.id === renamingPanelId);
-  // Preserve emoji prefix from original title
   const origTitle = def?.title || '';
-  const emojiMatch = origTitle.match(/^(\S+) /);
-  const prefix = emojiMatch ? emojiMatch[1] + ' ' : '';
-  const newTitle = prefix + val;
+  const origEmoji = origTitle.match(/^(\S+)\s/)?.[1] || '';
+  const useEmoji  = emoji || origEmoji;
+  const useName   = val || origTitle.replace(/^\S+\s/, '');
+  const newTitle  = useEmoji ? `${useEmoji} ${useName}` : useName;
   if (item) item.customTitle = newTitle;
   saveLayout();
-  // Update in DOM without full re-render
   const titleEl = document.getElementById('title-' + renamingPanelId);
   if (titleEl) titleEl.textContent = newTitle;
   closeRenameModal();
 }
 
+
+
+// ─── BRANDING ─────────────────────────────────────────────────────────────────
+function loadBranding() {
+  const title = localStorage.getItem('nexus_title') || 'FML Hub';
+  const sub   = localStorage.getItem('nexus_sub')   || 'Mech Eng · Sem Break 2026';
+  document.querySelectorAll('.hero-name').forEach(el => el.textContent = title);
+  document.querySelectorAll('.topbar-title strong').forEach(el => el.textContent = title);
+  document.querySelectorAll('.hero-sub').forEach(el => el.textContent = sub);
+  // Update tab title
+  document.title = `${title} // Dashboard`;
+}
+
+function saveBranding() {
+  const title = document.getElementById('branding-title').value.trim() || 'FML Hub';
+  const sub   = document.getElementById('branding-sub').value.trim()   || 'Mech Eng · Sem Break 2026';
+  localStorage.setItem('nexus_title', title);
+  localStorage.setItem('nexus_sub',   sub);
+  loadBranding();
+  closeSetup();
+}
+
+function resetBranding() {
+  localStorage.removeItem('nexus_title');
+  localStorage.removeItem('nexus_sub');
+  loadBranding();
+}
+
+function initBrandingFields() {
+  const ti = document.getElementById('branding-title');
+  const si = document.getElementById('branding-sub');
+  if (ti) ti.value = localStorage.getItem('nexus_title') || 'FML Hub';
+  if (si) si.value = localStorage.getItem('nexus_sub')   || 'Mech Eng · Sem Break 2026';
+}
 
 // ─── PHOTO WIDGET ─────────────────────────────────────────────────────────────
 let photos = JSON.parse(localStorage.getItem('nexus_photos') || '[]');
@@ -2554,21 +2617,18 @@ function buildPhotosHTML() {
       <button class="photo-next" onclick="nextPhoto()">&#8250;</button>
       <div class="photo-nav" id="photo-dots"></div>
     </div>
-    <div class="photo-manage" id="photo-thumbs"></div>
   `;
 }
 
 function renderPhotos() {
   const slides = document.getElementById('photo-slides');
   const dots   = document.getElementById('photo-dots');
-  const thumbs = document.getElementById('photo-thumbs');
   if (!slides) return;
   clearInterval(photoInterval);
 
   if (!photos.length) {
-    slides.innerHTML = `<div class="photo-empty"><span style="font-size:32px;opacity:0.3">🖼</span><span>No photos yet</span><span style="font-size:10px;font-family:'Share Tech Mono',monospace">click + Add to upload</span></div>`;
+    slides.innerHTML = `<div class="photo-empty"><span style="font-size:32px;opacity:0.3">🖼</span><span>No photos yet</span><span style="font-size:10px;font-family:'Share Tech Mono',monospace">tap Manage to add photos</span></div>`;
     if (dots) dots.innerHTML = '';
-    if (thumbs) thumbs.innerHTML = '';
     return;
   }
 
@@ -2582,12 +2642,6 @@ function renderPhotos() {
     `<button class="photo-dot${i === photoIdx ? ' active' : ''}" onclick="goPhoto(${i})"></button>`
   ).join('');
 
-  if (thumbs) thumbs.innerHTML = photos.map((p, i) => `
-    <div class="photo-thumb-wrap">
-      <img class="photo-thumb" src="${p}" onclick="goPhoto(${i})" title="Click to view"/>
-      <button class="photo-thumb-del" onclick="deletePhoto(${i})" title="Remove">✕</button>
-    </div>`).join('');
-
   // Restore interval select value
   const sel = document.getElementById('photo-interval-select');
   if (sel) sel.value = String(photoDelay);
@@ -2598,6 +2652,54 @@ function renderPhotos() {
       renderPhotos();
     }, photoDelay);
   }
+}
+
+function openPhotoModal() {
+  renderPhotoModal();
+  document.getElementById('photoModal').classList.add('active');
+}
+function closePhotoModal() { document.getElementById('photoModal').classList.remove('active'); }
+
+function renderPhotoModal() {
+  const grid = document.getElementById('photo-modal-grid');
+  if (!grid) return;
+  if (!photos.length) {
+    grid.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">No photos yet — add some below</div>`;
+    return;
+  }
+  grid.innerHTML = photos.map((p, i) => `
+    <div style="position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;cursor:pointer;border:2px solid ${i===photoIdx?'var(--accent)':'var(--border)'}" onclick="goPhoto(${i});renderPhotoModal()">
+      <img src="${p}" style="width:100%;height:100%;object-fit:cover;display:block"/>
+      <button onclick="event.stopPropagation();deletePhotoModal(${i})"
+        style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.7);border:1px solid var(--red);color:var(--red-soft);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:900">✕</button>
+      ${i===photoIdx?'<div style="position:absolute;bottom:4px;left:0;right:0;text-align:center"><span style="background:var(--accent);font-size:8px;padding:1px 6px;border-radius:4px;font-family:Share Tech Mono,monospace">CURRENT</span></div>':''}
+    </div>`).join('');
+}
+
+function deletePhotoModal(i) {
+  photos.splice(i, 1);
+  photoIdx = Math.max(0, photoIdx - 1);
+  savePhotos(); renderPhotos(); renderPhotoModal();
+}
+
+function addPhotosModal(input) {
+  const files = Array.from(input.files);
+  const fb = document.getElementById('photo-modal-feedback');
+  if (fb) fb.textContent = `⏳ Loading ${files.length} photo${files.length>1?'s':''}...`;
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      photos.push(e.target.result);
+      loaded++;
+      if (loaded === files.length) {
+        savePhotos(); renderPhotos(); renderPhotoModal();
+        if (fb) fb.textContent = `✓ Added ${files.length} photo${files.length>1?'s':''}`;
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
 }
 
 function goPhoto(i) { photoIdx = i; clearInterval(photoInterval); renderPhotos(); }
@@ -2618,6 +2720,7 @@ function addPhotos(input) {
   });
   input.value = '';
 }
+
 
 function deletePhoto(i) {
   photos.splice(i, 1);
@@ -2855,6 +2958,7 @@ if (calFeeds.length) {
 }
 renderGrid();
 renderSidebarNav();
+loadBranding();
 
 // If parser version changed, silently re-fetch all feeds in background
 if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
@@ -2916,16 +3020,39 @@ if (cachedParserVersion < PARSER_VERSION && calFeeds.length) {
     </div>
     <div class="modal-body">
       <div class="input-row">
-        <label class="input-label">NEW NAME</label>
+        <label class="input-label">EMOJI / ICON</label>
+        <input class="cp-input" id="rename-emoji" placeholder="📅" style="font-size:20px;width:80px;text-align:center"/>
+      </div>
+      <div class="input-row">
+        <label class="input-label">NAME</label>
         <input class="cp-input" id="rename-input" placeholder="Enter panel name..."
           onkeydown="if(event.key==='Enter')applyRename()"/>
       </div>
-      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);margin-bottom:12px">
-        The emoji prefix is kept automatically
-      </div>
       <div class="btn-row">
-        <button class="btn-red" onclick="applyRename()">Rename</button>
+        <button class="btn-red" onclick="applyRename()">Save</button>
         <button class="btn-ghost" onclick="closeRenameModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- PHOTO MANAGE MODAL -->
+<div class="modal-overlay" id="photoModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">🖼 Manage Photos</span>
+      <button class="modal-close" onclick="closePhotoModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="photo-modal-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;max-height:320px;overflow-y:auto"></div>
+      <div style="border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:8px;letter-spacing:0.06em">ADD PHOTOS</div>
+        <label class="btn-red" style="cursor:pointer;display:inline-block">
+          + Upload Photos
+          <input type="file" accept="image/*" multiple style="display:none" onchange="addPhotosModal(this)"/>
+        </label>
+        <div id="photo-modal-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);margin-top:8px;min-height:14px"></div>
       </div>
     </div>
   </div>
