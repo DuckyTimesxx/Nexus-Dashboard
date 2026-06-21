@@ -1461,6 +1461,7 @@ function shiftWeek(dir) {
 function renderWeek24() {
   const body = document.getElementById('week24-body');
   if (!body) return;
+  const isMultiDay = e => e.allDay || (e.endDate && e.endDate > e.date);
 
   const baseDate = new Date();
   baseDate.setDate(baseDate.getDate() + weekOffset * 7);
@@ -1587,7 +1588,6 @@ function renderWeek24() {
     if (el) el.innerHTML = '';
   }
   // Collect allday/multi-day events that overlap this week
-  const isMultiDay = e => e.allDay || (e.endDate && e.endDate > e.date);
   const allDayEvents = S.calEvents.filter(isMultiDay);
 
   // Group multi-day events by track (row) to avoid overlap
