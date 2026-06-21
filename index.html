@@ -1608,6 +1608,12 @@ function shiftWeek(dir) {
   renderWeek24();
 }
 
+// Local date string helper — avoids UTC offset shifting date back a day
+function localDateStr(d) {
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
 function renderWeek24() {
   const body = document.getElementById('week24-body');
   if (!body) return;
@@ -1619,11 +1625,12 @@ function renderWeek24() {
   const weekStart = new Date(baseDate); weekStart.setDate(baseDate.getDate() - dow);
   weekStart.setHours(0,0,0,0);
   const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  const todayReal = new Date().toISOString().split('T')[0];
+  const todayReal = localDateStr(new Date());
 
   const weekDays = Array.from({length:7}, (_,i) => {
     const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
-    return { d, dateStr: d.toISOString().split('T')[0], label: days[i], isToday: d.toISOString().split('T')[0] === todayReal };
+    const dateStr = localDateStr(d);
+    return { d, dateStr, label: days[i], isToday: dateStr === todayReal };
   });
 
   const weekEndStr = weekDays[6].dateStr;
@@ -1831,8 +1838,8 @@ function buildWeekGrid() {
   let ws = null, we = null;
   for (let i = 0; i < 7; i++) {
     const d = new Date(mon); d.setDate(mon.getDate() + i);
-    const isToday = d.toDateString() === today.toDateString();
-    const dateStr = d.toISOString().split('T')[0];
+    const isToday = localDateStr(d) === localDateStr(today);
+    const dateStr = localDateStr(d);
     if (i === 0) ws = d; if (i === 6) we = d;
     let pips = '';
     S.calEvents.filter(e => e.date === dateStr).slice(0,3).forEach(() => { pips += '<div class="day-pip pip-cal"></div>'; });
@@ -1855,8 +1862,8 @@ function buildWeekGridPips() {
   let ws = null, we = null;
   for (let i = 0; i < 7; i++) {
     const d = new Date(mon); d.setDate(mon.getDate() + i);
-    const isToday = d.toDateString() === today.toDateString();
-    const dateStr = d.toISOString().split('T')[0];
+    const isToday = localDateStr(d) === localDateStr(today);
+    const dateStr = localDateStr(d);
     if (i === 0) ws = d; if (i === 6) we = d;
     let pips = '';
     S.calEvents.filter(e => e.date === dateStr).slice(0,3).forEach(() => { pips += '<div class="day-pip pip-cal"></div>'; });
@@ -1872,7 +1879,7 @@ function buildWeekGridPips() {
 
 // ─── STATS ────────────────────────────────────────────────────────────────────
 function updateStats() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr(new Date());
   const eventsToday = S.calEvents.filter(e => e.date === today).length;
   const assignsDue  = S.assignments.filter(a => { const d = new Date(a.due), n = new Date(); return (d-n)/(864e5) >= 0 && (d-n)/(864e5) <= 7; }).length;
   let totalHrs = 0;
@@ -2000,6 +2007,19 @@ function parseIcal(text) {
   return events.map(e => ({ ...e, type: 'normal' }));
 }
 
+// Debug: log parsed events to console so we can verify dates
+function debugCalEvents() {
+  console.table(S.calEvents.map(e => ({
+    title: e.title?.slice(0,30),
+    date: e.date,
+    time: e.time,
+    endDate: e.endDate,
+    endTime: e.endTime,
+    allDay: e.allDay,
+    multiDay: e.multiDay
+  })));
+}
+
 async function loadCalendarIcal() { return addCalendarFeed(); }
 async function _oldLoadCalendarIcal_unused() {
   const url = document.getElementById('gcal-ical-url').value.trim();
@@ -2034,7 +2054,7 @@ async function _oldLoadCalendarIcal_unused() {
 function renderCalendar() {
   const body = document.getElementById('gcal-body');
   if (!body || !S.calEvents.length) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr(new Date());
   const upcoming = S.calEvents.filter(e => e.date >= today).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8);
   const st = document.getElementById('gcal-status-tag');
   if (st) st.innerHTML = `<span class="conn-tag">● CONNECTED</span>`;
@@ -2071,7 +2091,7 @@ function fetchGCalEvents(fb) {
   }).catch(e=>{if(fb){fb.style.color='var(--red-soft)';fb.textContent='✕ '+(e.result?.error?.message||JSON.stringify(e));}});
 }
 function loadDemoCalendar() {
-  const today=new Date(), fmt=o=>{const d=new Date(today);d.setDate(today.getDate()+o);return d.toISOString().split('T')[0];};
+  const today=new Date(), fmt=o=>{const d=new Date(today);d.setDate(today.getDate()+o);return localDateStr(d);};
   S.calEvents=[{title:'Mechanics Lecture',date:fmt(0),time:'09:00',type:'normal'},{title:'Maths Tutorial',date:fmt(0),time:'14:00',type:'normal'},{title:'Lab Session',date:fmt(1),time:'10:00',type:'busy'},{title:'Study Group',date:fmt(2),time:'13:00',type:'normal'},{title:'Project Meeting',date:fmt(3),time:'11:00',type:'busy'},{title:'Fluid Mechanics',date:fmt(4),time:'09:00',type:'normal'},{title:'Careers Fair',date:fmt(5),time:'10:00',type:'normal'}];
   localStorage.setItem('nexus_events',JSON.stringify(S.calEvents));
   document.getElementById('gcal-feedback').style.color='var(--green)';
@@ -2099,7 +2119,7 @@ async function connectCanvas() {
   } catch(e){fb.style.color='var(--red-soft)';fb.textContent='✕ '+e.message;}
 }
 function loadDemoCanvas() {
-  const today=new Date(), fmt=o=>{const d=new Date(today);d.setDate(today.getDate()+o);return d.toISOString().split('T')[0];};
+  const today=new Date(), fmt=o=>{const d=new Date(today);d.setDate(today.getDate()+o);return localDateStr(d);};
   S.assignments=[{name:'FEA Report',course:'MECH2201',due:fmt(2),points:40},{name:'Thermodynamics Assignment 3',course:'MECH1102',due:fmt(5),points:25},{name:'CAD Modelling Task',course:'ENGD1001',due:fmt(8),points:30},{name:'Statics Problem Set',course:'MECH1201',due:fmt(12),points:20},{name:'Lab Report — Tensile Testing',course:'MECH2201',due:fmt(18),points:50}];
   localStorage.setItem('nexus_assignments',JSON.stringify(S.assignments));
   document.getElementById('canvas-feedback').style.color='var(--green)';
@@ -2388,15 +2408,15 @@ function renderHabitsWidget() {
     el.innerHTML = `<div class="empty" style="padding:16px"><span style="font-size:22px;display:block;margin-bottom:6px;opacity:0.3">🔥</span><div style="font-size:12px;color:var(--text-dim)">No habits yet</div></div>`;
     return;
   }
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr(new Date());
   el.innerHTML = habits.map(h => {
     const log = h.log || {};
     const done = !!log[today];
     const col = h.color || 'var(--accent)';
     // Mini streak calc
     let streak = 0;
-    const d = new Date(); if (!log[d.toISOString().split('T')[0]]) d.setDate(d.getDate()-1);
-    while(log[d.toISOString().split('T')[0]]) { streak++; d.setDate(d.getDate()-1); }
+    const d = new Date(); if (!log[localDateStr(d)]) d.setDate(d.getDate()-1);
+    while(log[localDateStr(d)]) { streak++; d.setDate(d.getDate()-1); }
     const iconHTML = h.iconType==='image'&&h.iconData ? `<img src="${h.iconData}" style="width:20px;height:20px;border-radius:5px;object-fit:cover"/>` : `<span style="font-size:16px">${h.icon||'🔥'}</span>`;
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
       <div style="width:28px;height:28px;border-radius:8px;background:${col}22;border:1px solid ${col}44;display:flex;align-items:center;justify-content:center;flex-shrink:0">${iconHTML}</div>
