@@ -1514,7 +1514,7 @@ function renderWeek24() {
     const col = di + 2;
     // Timed events for this day
     const timedEvents = [];
-    S.calEvents.filter(e => e.date === day.dateStr && e.time && !e.allDay && !(e.endDate && e.endDate > e.date && !e.time)).forEach(e => {
+    S.calEvents.filter(e => e.date === day.dateStr && e.time && !isMultiDay(e)).forEach(e => {
       timedEvents.push({ title: e.title, time: e.time, endTime: e.endTime, color: e.calColor || '#60a5fa' });
     });
     S.shifts.filter(s => s.date === day.dateStr).forEach(s => {
@@ -1587,12 +1587,8 @@ function renderWeek24() {
     if (el) el.innerHTML = '';
   }
   // Collect allday/multi-day events that overlap this week
-  const allDayEvents = S.calEvents.filter(e => {
-    if (!e.allDay && !e.endDate) return e.allDay; // skip timed
-    if (e.allDay) return true;
-    // Multi-day: endDate > date
-    return e.endDate && e.endDate > e.date;
-  });
+  const isMultiDay = e => e.allDay || (e.endDate && e.endDate > e.date);
+  const allDayEvents = S.calEvents.filter(isMultiDay);
 
   // Group multi-day events by track (row) to avoid overlap
   const tracks = []; // each track is array of {ev, si, ei}
