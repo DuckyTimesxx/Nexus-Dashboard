@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S2 Study Guide — Dani</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+  :root {
+    --bg: #0e0f14;
+    --surface: #16181f;
+    --surface2: #1e2029;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7b8099;
+    --green: #22c98a;
+    --green-dim: #193d2e;
+    --blue: #4a9eff;
+    --blue-dim: #162035;
+    --skip: #3a3d4a;
+    --skip-text: #5a5f72;
+    --tab-active-bg: #1e2029;
+    --accent: #7c6af7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--accent); }
+  .subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: flex;
+    min-height: calc(100vh - 57px);
+  }
+
+  /* ── Sidebar ── */
+  nav {
+    width: 200px;
+    min-width: 200px;
+    border-right: 1px solid var(--border);
+    padding: 1.25rem 0;
+    position: sticky;
+    top: 57px;
+    height: calc(100vh - 57px);
+    overflow-y: auto;
+  }
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 1rem 0.5rem;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 1rem;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface); }
+  .nav-item.active {
+    color: var(--text);
+    border-left-color: var(--accent);
+    background: var(--surface);
+  }
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .nav-item.active .nav-dot { background: var(--accent); }
+
+  /* ── Main ── */
+  main {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    max-width: 720px;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .panel-header { margin-bottom: 1.75rem; }
+  .panel-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+  .book-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin-top: 0.5rem;
+  }
+
+  /* Book switcher (ENGE1000) */
+  .book-switcher {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .book-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .book-btn:hover { color: var(--text); border-color: var(--accent); }
+  .book-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .book-view { display: none; }
+  .book-view.active { display: block; }
+
+  /* ── Info box ── */
+  .info-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 0.75rem 1rem;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── Section headings ── */
+  .section-heading {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    margin-top: 1.5rem;
+  }
+  .section-heading.core { color: var(--green); }
+  .section-heading.useful { color: var(--blue); }
+  .section-heading.skip { color: var(--skip-text); }
+  .section-heading:first-of-type { margin-top: 0; }
+
+  /* ── Chapter cards ── */
+  .card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 6px;
+    border: 1px solid transparent;
+    border-left-width: 2px;
+    transition: background 0.15s;
+  }
+  .card.core {
+    background: var(--green-dim);
+    border-color: var(--green);
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: var(--green);
+  }
+  .card.core { border: 1px solid #193d2e; border-left: 2px solid var(--green); }
+  .card.useful { border: 1px solid #162035; border-left: 2px solid var(--blue); background: var(--blue-dim); }
+  .card.skip { border: 1px solid var(--border); border-left: 2px solid var(--skip); background: var(--surface); opacity: 0.55; }
+
+  .card-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 40px;
+    padding-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .card.core .card-num { color: var(--green); }
+  .card.useful .card-num { color: var(--blue); }
+
+  .card-body { flex: 1; }
+  .card-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .card.skip .card-title { color: var(--muted); }
+  .card-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .step-badge {
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid #22c98a40;
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .card.useful .step-badge { background: var(--blue-dim); color: var(--blue); border-color: #4a9eff40; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .legend-pip {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+
+  /* Mobile nav */
+  .mobile-nav {
+    display: none;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 1rem 1rem 0;
+  }
+  .mobile-nav-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .mobile-nav-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  @media (max-width: 640px) {
+    nav { display: none; }
+    .mobile-nav { display: flex; }
+    main { padding: 1.25rem 1rem; }
+    .layout { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">study<span>.</span>guide</div>
+  <div class="subtitle">S2 2026 · Adelaide Uni</div>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-btn active" onclick="show('math1000', this)">Foundations Maths</button>
+  <button class="mobile-nav-btn" onclick="show('engi1004', this)">ENGI1004</button>
+  <button class="mobile-nav-btn" onclick="show('engi1002', this)">ENGI1002</button>
+  <button class="mobile-nav-btn" onclick="show('enge1000', this)">ENGE1000</button>
+  <button class="mobile-nav-btn" onclick="show('comp1006', this)">COMP1006</button>
+</div>
+
+<div class="layout">
+  <nav>
+    <div class="nav-label">Courses</div>
+    <div class="nav-item active" onclick="show('math1000', this)"><div class="nav-dot"></div>Foundations Maths</div>
+    <div class="nav-item" onclick="show('engi1004', this)"><div class="nav-dot"></div>ENGI1004</div>
+    <div class="nav-item" onclick="show('engi1002', this)"><div class="nav-dot"></div>ENGI1002</div>
+    <div class="nav-item" onclick="show('enge1000', this)"><div class="nav-dot"></div>ENGE1000</div>
+    <div class="nav-item" onclick="show('comp1006', this)"><div class="nav-dot"></div>COMP1006</div>
+  </nav>
+
+  <main>
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="legend-item"><div class="legend-pip" style="background:var(--green)"></div>Do first</div>
+      <div class="legend-item"><div class="legend-pip" style="background:var(--blue)"></div>Do after</div>
+      <div class="legend-item"><div class="legend-pip" style="background:var(--skip)"></div>Skip for now</div>
+    </div>
+
+    <!-- ── FOUNDATIONS MATHS ── -->
+    <div id="math1000" class="panel active">
+      <div class="panel-header">
+        <div class="panel-title">Foundations in Maths</div>
+        <div class="book-tag">📘 Stroud — Engineering Mathematics (7th ed)</div>
+      </div>
+      <div class="info-box">Stroud is split into two parts. Part I (Foundation programmes F.1–F.13) covers everything from basic arithmetic up to intro calculus — start here regardless of how you feel about your level. Part II (Programmes 1+) is first-year degree level. Work through in order — each programme builds on the last. Once you finish F.13, you're ready to open Kreyszig.</div>
+
+      <div class="section-heading core">Part I — do first (build your foundation)</div>
+
+      <div class="card core"><div class="card-num">F.1</div><div class="card-body"><div class="card-title">Arithmetic</div><div class="card-desc">Numbers, fractions, powers, rounding. Start here even if it feels basic — gaps here cause problems everywhere else.</div></div><span class="step-badge">Step 1</span></div>
+      <div class="card core"><div class="card-num">F.2</div><div class="card-body"><div class="card-title">Introduction to Algebra</div><div class="card-desc">Variables, expanding brackets, powers, logarithms, algebraic fractions. Critical groundwork.</div></div><span class="step-badge">Step 2</span></div>
+      <div class="card core"><div class="card-num">F.3</div><div class="card-body"><div class="card-title">Expressions & Equations</div><div class="card-desc">Rearranging and solving equations. You'll do this constantly in every engineering subject.</div></div><span class="step-badge">Step 3</span></div>
+      <div class="card core"><div class="card-num">F.4</div><div class="card-body"><div class="card-title">Graphs</div><div class="card-desc">Plotting equations, Cartesian axes, inequalities. Underpins visualising everything in maths and engineering.</div></div><span class="step-badge">Step 4</span></div>
+      <div class="card core"><div class="card-num">F.5–F.6</div><div class="card-body"><div class="card-title">Linear & Polynomial Equations</div><div class="card-desc">Simultaneous equations, quadratics. Used heavily in circuit analysis and statics.</div></div><span class="step-badge">Step 5</span></div>
+      <div class="card core"><div class="card-num">F.9</div><div class="card-body"><div class="card-title">Trigonometry</div><div class="card-desc">Sin, cos, tan, identities, triangles. Essential for ENGE1000 (AC circuits) and mechanics.</div></div><span class="step-badge">Step 6</span></div>
+      <div class="card core"><div class="card-num">F.11</div><div class="card-body"><div class="card-title">Trigonometric & Exponential Functions</div><div class="card-desc">Graphs and behaviour of trig and e^x functions. Directly feeds into ODEs and AC circuits.</div></div><span class="step-badge">Step 7</span></div>
+      <div class="card core"><div class="card-num">F.12</div><div class="card-body"><div class="card-title">Differentiation</div><div class="card-desc">Derivatives, chain rule, product rule. The gateway to everything in ENGI1004.</div></div><span class="step-badge">Step 8</span></div>
+      <div class="card core"><div class="card-num">F.13</div><div class="card-body"><div class="card-title">Integration</div><div class="card-desc">Antiderivatives, definite integrals, substitution. Needed for solving ODEs — do this before touching Kreyszig.</div></div><span class="step-badge">Step 9</span></div>
+
+      <div class="section-heading useful">Part II — do after (once foundation is solid)</div>
+
+      <div class="card useful"><div class="card-num">Prog 3</div><div class="card-body"><div class="card-title">Hyperbolic Functions</div><div class="card-desc">Sinh, cosh, tanh — appear in ODE solutions. Short programme, do it when you hit them in Kreyszig.</div></div></div>
+      <div class="card useful"><div class="card-num">Prog 5</div><div class="card-body"><div class="card-title">Matrices & Determinants</div><div class="card-desc">Directly supports Kreyszig Ch 7. Do this before or alongside that chapter.</div></div></div>
+      <div class="card useful"><div class="card-num">Prog 10–11</div><div class="card-body"><div class="card-title">Further Differentiation & Integration</div><div class="card-desc">Partial derivatives, integration by parts, partial fractions. Needed for more advanced ODE solving.</div></div></div>
+      <div class="card useful"><div class="card-num">Prog 24–25</div><div class="card-body"><div class="card-title">Statistics & Probability</div><div class="card-desc">Revisit to reinforce what you did in MATH1000 last semester.</div></div></div>
+
+      <div class="section-heading skip">Skip for now</div>
+
+      <div class="card skip"><div class="card-num">F.7–F.8</div><div class="card-body"><div class="card-title">Binomials & Partial Fractions</div><div class="card-desc">Useful eventually but not urgent — come back when needed.</div></div></div>
+      <div class="card skip"><div class="card-num">Prog 1–2</div><div class="card-body"><div class="card-title">Complex Numbers</div><div class="card-desc">Important later (AC circuits, ENGI1004) but not your immediate priority.</div></div></div>
+      <div class="card skip"><div class="card-num">Prog 12–23</div><div class="card-body"><div class="card-title">Series, Transforms, Vector Calculus, Numerical Methods…</div><div class="card-desc">Second year material — leave for now.</div></div></div>
+    </div>
+
+    <!-- ── ENGI1004 ── -->
+    <div id="engi1004" class="panel">
+      <div class="panel-header">
+        <div class="panel-title">ENGI1004 — Engineering Modelling 1</div>
+        <div class="book-tag">📘 Kreyszig — Advanced Engineering Mathematics (9th ed)</div>
+      </div>
+      <div class="info-box">Complete the Stroud foundation programmes — especially F.12–F.13 on differentiation and integration — before starting here. Kreyszig assumes you can already differentiate and integrate confidently.</div>
+
+      <div class="section-heading core">Do first — core for ENGI1004</div>
+
+      <div class="card core"><div class="card-num">Ch 1</div><div class="card-body"><div class="card-title">First-Order ODEs</div><div class="card-desc">Separable, linear, integrating factors. The foundation — everything else builds on this.</div></div><span class="step-badge">Step 1</span></div>
+      <div class="card core"><div class="card-num">Ch 2</div><div class="card-body"><div class="card-title">Second-Order Linear ODEs</div><div class="card-desc">Constant coefficients, homogeneous equations, mass-spring modelling. Big chapter — take your time.</div></div><span class="step-badge">Step 2</span></div>
+      <div class="card core"><div class="card-num">Ch 7</div><div class="card-body"><div class="card-title">Linear Algebra: Matrices & Linear Systems</div><div class="card-desc">Matrix operations, determinants, solving systems of equations. Do before Ch 4.</div></div><span class="step-badge">Step 3</span></div>
+      <div class="card core"><div class="card-num">Ch 6</div><div class="card-body"><div class="card-title">Laplace Transforms</div><div class="card-desc">Most useful engineering tool for solving ODEs. Very likely in scope for this course.</div></div><span class="step-badge">Step 4</span></div>
+      <div class="card core"><div class="card-num">Ch 4</div><div class="card-body"><div class="card-title">Systems of ODEs</div><div class="card-desc">Combines Ch 2 and Ch 7 knowledge. Requires matrices — do Ch 7 first.</div></div><span class="step-badge">Step 5</span></div>
+
+      <div class="section-heading skip">Skip for now</div>
+
+      <div class="card skip"><div class="card-num">Ch 3</div><div class="card-body"><div class="card-title">Higher-Order ODEs</div><div class="card-desc">Overkill for first year.</div></div></div>
+      <div class="card skip"><div class="card-num">Ch 5</div><div class="card-body"><div class="card-title">Series Solutions & Special Functions</div><div class="card-desc">Advanced — not needed yet.</div></div></div>
+      <div class="card skip"><div class="card-num">Ch 8–24</div><div class="card-body"><div class="card-title">Vector Calculus, PDEs, Fourier, Complex Analysis…</div><div class="card-desc">Later years content. Leave alone for now.</div></div></div>
+    </div>
+
+    <!-- ── ENGI1002 ── -->
+    <div id="engi1002" class="panel">
+      <div class="panel-header">
+        <div class="panel-title">ENGI1002 — Engineering Materials</div>
+        <div class="book-tag">📘 Callister & Rethwisch — Materials Science & Engineering (9th ed)</div>
+      </div>
+
+      <div class="section-heading core">Do first — core for ENGI1002</div>
+
+      <div class="card core"><div class="card-num">Ch 2</div><div class="card-body"><div class="card-title">Atomic Structure & Interatomic Bonding</div><div class="card-desc">Why materials behave the way they do. Explains everything that comes after.</div></div><span class="step-badge">Step 1</span></div>
+      <div class="card core"><div class="card-num">Ch 3</div><div class="card-body"><div class="card-title">The Structure of Crystalline Solids</div><div class="card-desc">Crystal structures, unit cells, density calculations. Very visual chapter.</div></div><span class="step-badge">Step 2</span></div>
+      <div class="card core"><div class="card-num">Ch 6</div><div class="card-body"><div class="card-title">Mechanical Properties of Metals</div><div class="card-desc">Stress, strain, elastic/plastic deformation, tensile testing. Connects directly to your statics background.</div></div><span class="step-badge">Step 3</span></div>
+      <div class="card core"><div class="card-num">Ch 7</div><div class="card-body"><div class="card-title">Dislocations & Strengthening Mechanisms</div><div class="card-desc">Why metals fail and how we stop them. Key for engineering applications.</div></div><span class="step-badge">Step 4</span></div>
+      <div class="card core"><div class="card-num">Ch 8</div><div class="card-body"><div class="card-title">Failure</div><div class="card-desc">Fracture, fatigue, creep. Very practical — this is what engineers actually worry about.</div></div><span class="step-badge">Step 5</span></div>
+
+      <div class="section-heading useful">Do after</div>
+
+      <div class="card useful"><div class="card-num">Ch 12–16</div><div class="card-body"><div class="card-title">Ceramics, Polymers, Composites</div><div class="card-desc">Other material families — likely covered but less heavily than metals.</div></div></div>
+      <div class="card useful"><div class="card-num">Ch 18</div><div class="card-body"><div class="card-title">Electrical Properties</div><div class="card-desc">Useful context overlapping with ENGE1000.</div></div></div>
+
+      <div class="section-heading skip">Skip for now</div>
+
+      <div class="card skip"><div class="card-num">Ch 4–5</div><div class="card-body"><div class="card-title">Imperfections & Diffusion</div><div class="card-desc">More niche — revisit if it comes up in lectures.</div></div></div>
+      <div class="card skip"><div class="card-num">Ch 19–22</div><div class="card-body"><div class="card-title">Thermal, Magnetic, Optical, Environmental Properties</div><div class="card-desc">Specialist topics — not first-year priority.</div></div></div>
+    </div>
+
+    <!-- ── ENGE1000 ── -->
+    <div id="enge1000" class="panel">
+      <div class="panel-header">
+        <div class="panel-title">ENGE1000 — Electrical & Electronic Systems</div>
+      </div>
+
+      <div class="book-switcher">
+        <button class="book-btn active" onclick="showBook('hayt', this)">Hayt — Circuit Analysis (8th ed)</button>
+        <button class="book-btn" onclick="showBook('alexander', this)">Alexander & Sadiku — Fundamentals (7th ed)</button>
+      </div>
+
+      <!-- Hayt -->
+      <div id="hayt" class="book-view active">
+        <div class="book-tag" style="margin-bottom:1.25rem">📘 Hayt, Kemmerly & Durbin — Engineering Circuit Analysis (8th ed)</div>
+        <div class="section-heading core">Do first — core for ENGE1000</div>
+        <div class="card core"><div class="card-num">Ch 1</div><div class="card-body"><div class="card-title">Introduction</div><div class="card-desc">Units, charge, current, voltage, power. The absolute starting point.</div></div><span class="step-badge">Step 1</span></div>
+        <div class="card core"><div class="card-num">Ch 2</div><div class="card-body"><div class="card-title">Resistive Circuits</div><div class="card-desc">Ohm's law, KVL, KCL, series and parallel resistors. You'll use these constantly.</div></div><span class="step-badge">Step 2</span></div>
+        <div class="card core"><div class="card-num">Ch 3</div><div class="card-body"><div class="card-title">Voltage & Current Dividers, Wye-Delta</div><div class="card-desc">Practical techniques for simplifying circuits.</div></div><span class="step-badge">Step 3</span></div>
+        <div class="card core"><div class="card-num">Ch 4</div><div class="card-body"><div class="card-title">Nodal & Mesh Analysis</div><div class="card-desc">Systematic circuit solving methods. Essential.</div></div><span class="step-badge">Step 4</span></div>
+        <div class="card core"><div class="card-num">Ch 5</div><div class="card-body"><div class="card-title">Useful Circuit Analysis Techniques</div><div class="card-desc">Superposition, Thevenin, Norton. Makes complex circuits much easier.</div></div><span class="step-badge">Step 5</span></div>
+        <div class="card core"><div class="card-num">Ch 6</div><div class="card-body"><div class="card-title">Capacitors & Inductors</div><div class="card-desc">Energy storage elements. Directly relevant to your electronics hobby.</div></div><span class="step-badge">Step 6</span></div>
+        <div class="card core"><div class="card-num">Ch 9–10</div><div class="card-body"><div class="card-title">Sinusoidal Steady-State Analysis</div><div class="card-desc">AC circuits and phasors — likely the second half of this course.</div></div><span class="step-badge">Step 7</span></div>
+        <div class="section-heading useful">Do after</div>
+        <div class="card useful"><div class="card-num">Ch 7–8</div><div class="card-body"><div class="card-title">First & Second-Order Circuits</div><div class="card-desc">Transient response — ties into ODEs from ENGI1004.</div></div></div>
+        <div class="section-heading skip">Skip for now</div>
+        <div class="card skip"><div class="card-num">Ch 11–18</div><div class="card-body"><div class="card-title">Power, Frequency Response, Two-Port, Laplace…</div><div class="card-desc">Second/third year topics.</div></div></div>
+      </div>
+
+      <!-- Alexander -->
+      <div id="alexander" class="book-view">
+        <div class="book-tag" style="margin-bottom:1.25rem">📘 Alexander & Sadiku — Fundamentals of Electric Circuits (7th ed)</div>
+        <div class="section-heading core">Do first — core for ENGE1000</div>
+        <div class="card core"><div class="card-num">Ch 1</div><div class="card-body"><div class="card-title">Basic Concepts</div><div class="card-desc">Charge, current, voltage, power, energy. The absolute starting point.</div></div><span class="step-badge">Step 1</span></div>
+        <div class="card core"><div class="card-num">Ch 2</div><div class="card-body"><div class="card-title">Basic Laws</div><div class="card-desc">Ohm's law, KVL & KCL. You'll use these constantly.</div></div><span class="step-badge">Step 2</span></div>
+        <div class="card core"><div class="card-num">Ch 3</div><div class="card-body"><div class="card-title">Methods of Analysis</div><div class="card-desc">Node voltage and mesh current methods. Essential circuit solving techniques.</div></div><span class="step-badge">Step 3</span></div>
+        <div class="card core"><div class="card-num">Ch 4</div><div class="card-body"><div class="card-title">Circuit Theorems</div><div class="card-desc">Thevenin, Norton, superposition. Makes complex circuits much easier.</div></div><span class="step-badge">Step 4</span></div>
+        <div class="card core"><div class="card-num">Ch 6</div><div class="card-body"><div class="card-title">Capacitors & Inductors</div><div class="card-desc">Energy storage elements. Directly relevant to your electronics hobby.</div></div><span class="step-badge">Step 5</span></div>
+        <div class="card core"><div class="card-num">Ch 9–10</div><div class="card-body"><div class="card-title">Sinusoids & AC Circuits / Phasors</div><div class="card-desc">AC analysis — likely the second half of this course.</div></div><span class="step-badge">Step 6</span></div>
+        <div class="section-heading useful">Do after</div>
+        <div class="card useful"><div class="card-num">Ch 7–8</div><div class="card-body"><div class="card-title">First & Second-Order Circuits</div><div class="card-desc">Transient response — ties into ODEs from ENGI1004.</div></div></div>
+        <div class="section-heading skip">Skip for now</div>
+        <div class="card skip"><div class="card-num">Ch 11–19</div><div class="card-body"><div class="card-title">Power, Three-Phase, Frequency Response, Laplace, Two-Port…</div><div class="card-desc">Second/third year topics.</div></div></div>
+      </div>
+    </div>
+
+    <!-- ── COMP1006 ── -->
+    <div id="comp1006" class="panel">
+      <div class="panel-header">
+        <div class="panel-title">COMP1006 — Engineering Programming</div>
+        <div class="book-tag">📘 Python Crash Course — Eric Matthes (3rd ed)</div>
+      </div>
+      <div class="info-box">You can skim Ch 1–3 fairly quickly given your Python experience from last semester. The matplotlib/NumPy chapters (Ch 15–17) will feel very familiar too.</div>
+
+      <div class="section-heading core">Do first — core for COMP1006</div>
+
+      <div class="card core"><div class="card-num">Ch 1</div><div class="card-body"><div class="card-title">Getting Started</div><div class="card-desc">Setup and your first program. Quick — you've already done this.</div></div><span class="step-badge">Step 1</span></div>
+      <div class="card core"><div class="card-num">Ch 2–3</div><div class="card-body"><div class="card-title">Variables, Strings & Lists</div><div class="card-desc">Data types and basic data structures. Foundation of everything.</div></div><span class="step-badge">Step 2</span></div>
+      <div class="card core"><div class="card-num">Ch 4</div><div class="card-body"><div class="card-title">Working with Lists — Loops</div><div class="card-desc">For loops and list operations. You'll write these constantly in engineering code.</div></div><span class="step-badge">Step 3</span></div>
+      <div class="card core"><div class="card-num">Ch 5</div><div class="card-body"><div class="card-title">If Statements</div><div class="card-desc">Conditionals and logic. Short but essential.</div></div><span class="step-badge">Step 4</span></div>
+      <div class="card core"><div class="card-num">Ch 7</div><div class="card-body"><div class="card-title">User Input & While Loops</div><div class="card-desc">Interactive programs. Ties into your dashboard projects.</div></div><span class="step-badge">Step 5</span></div>
+      <div class="card core"><div class="card-num">Ch 8</div><div class="card-body"><div class="card-title">Functions</div><div class="card-desc">Structuring reusable code. Critical for engineering scripts.</div></div><span class="step-badge">Step 6</span></div>
+
+      <div class="section-heading useful">Do after</div>
+
+      <div class="card useful"><div class="card-num">Ch 9</div><div class="card-body"><div class="card-title">Classes (OOP Basics)</div><div class="card-desc">Object-oriented programming intro — likely in scope for COMP1006.</div></div></div>
+      <div class="card useful"><div class="card-num">Ch 10</div><div class="card-body"><div class="card-title">Files & Exceptions</div><div class="card-desc">Reading/writing data files — useful for truss analyser and engineering data work.</div></div></div>
+      <div class="card useful"><div class="card-num">Ch 15–17</div><div class="card-body"><div class="card-title">Data Visualisation (matplotlib, NumPy)</div><div class="card-desc">Plotting — relevant since you already know some pandas/matplotlib from last semester.</div></div></div>
+
+      <div class="section-heading skip">Skip for now</div>
+
+      <div class="card skip"><div class="card-num">Ch 12–14</div><div class="card-body"><div class="card-title">Pygame / Game Projects</div><div class="card-desc">Fun but not relevant to engineering programming.</div></div></div>
+      <div class="card skip"><div class="card-num">Ch 18–20</div><div class="card-body"><div class="card-title">Django Web Apps</div><div class="card-desc">Web development — not in scope for this course.</div></div></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function show(id, el) {
+    // panels
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    // sidebar nav
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    // mobile nav
+    document.querySelectorAll('.mobile-nav-btn').forEach(n => n.classList.remove('active'));
+    // highlight the clicked element and its counterpart
+    el.classList.add('active');
+    // sync sidebar + mobile
+    const allTriggers = document.querySelectorAll('.nav-item, .mobile-nav-btn');
+    allTriggers.forEach(t => {
+      if (t !== el && t.getAttribute('onclick') === el.getAttribute('onclick')) {
+        t.classList.add('active');
+      }
+    });
+  }
+
+  function showBook(id, el) {
+    document.querySelectorAll('.book-view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.book-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+  }
+</script>
+</body>
+</html>
