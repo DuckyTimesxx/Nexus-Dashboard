@@ -1,0 +1,14 @@
+{
+  "name": "FML Hub",
+  "short_name": "FML Hub",
+  "description": "Student dashboard",
+  "start_url": "/Nexus-Dashboard/",
+  "display": "standalone",
+  "background_color": "#140808",
+  "theme_color": "#e8354a",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
