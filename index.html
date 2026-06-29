@@ -756,6 +756,28 @@ body {
       <button class="modal-close" onclick="closeSetup()">✕</button>
     </div>
     <div class="modal-body">
+      <div class="modal-section" id="section-gist">
+        <div class="modal-section-title" style="color:var(--accent4)">☁️ Gist Sync</div>
+        <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
+          Sync your data across devices via a private GitHub Gist. Your token is stored locally and never sent anywhere except GitHub.
+        </p>
+        <div class="input-row">
+          <label class="input-label">GITHUB TOKEN (gist scope only)</label>
+          <input class="cp-input" id="gist-token" type="password" placeholder="ghp_..."/>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);margin-bottom:12px">
+          Gist ID: <span style="color:var(--text-mid)">d0e14cbf8e972e359690016bfb85f982</span> (hardcoded)
+        </div>
+        <div class="btn-row">
+          <button class="btn-red" onclick="gistPush()">⬆ Push to Gist</button>
+          <button class="btn-ghost" onclick="gistPull()">⬇ Pull from Gist</button>
+        </div>
+        <div id="gist-feedback" style="font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:10px;min-height:14px;line-height:1.6"></div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:10px;font-size:11px;color:var(--text-dim);line-height:1.6">
+          <strong style="color:var(--text-mid)">Workflow:</strong> Push on your laptop → open dashboard on phone → Pull. Takes 2 seconds.
+        </div>
+      </div>
+
       <div class="modal-section" id="section-branding">
         <div class="modal-section-title" style="color:var(--gold)">✏️ Dashboard Name</div>
         <div class="input-row">
@@ -2337,6 +2359,10 @@ function renderRoster() {
 function openSetup(section) {
   document.getElementById('setupModal').classList.add('active');
   initBrandingFields();
+  // Restore gist token
+  const savedToken = localStorage.getItem('nexus_gist_token');
+  const tokenEl = document.getElementById('gist-token');
+  if (savedToken && tokenEl) tokenEl.value = savedToken;
   if(section){setTimeout(()=>{const el=document.getElementById('section-'+section);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100);}
   if(section==='roster'&&!document.querySelectorAll('#shift-entries .shift-input-row').length){S.shifts.forEach(s=>addShiftRow(s.date,s.start,s.end));if(!S.shifts.length)addShiftRow();}
 }
