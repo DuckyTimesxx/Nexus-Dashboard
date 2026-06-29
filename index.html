@@ -699,6 +699,9 @@ body {
         <span id="live-time">00:00:00</span>
         <span id="live-date"></span>
       </div>
+      <button class="btn-ghost" onclick="gistPush()" title="Push data to Gist" style="font-size:11px;padding:7px 12px">⬆</button>
+      <button class="btn-ghost" onclick="gistPull()" title="Pull data from Gist" style="font-size:11px;padding:7px 12px">⬇</button>
+      <div id="topbar-sync-status" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);min-width:60px;text-align:center"></div>
       <button class="btn-ghost" id="edit-toggle-btn" onclick="toggleEditMode()" style="font-size:11px;padding:7px 14px">✏️ Edit Layout</button>
       <button class="btn-red" onclick="openSetup()" style="font-size:11px;padding:7px 14px">⚙ Setup</button>
     </div>
@@ -757,7 +760,7 @@ body {
     </div>
     <div class="modal-body">
       <div class="modal-section" id="section-gist">
-        <div class="modal-section-title" style="color:var(--blue)">☁️ Gist Sync</div>
+        <div class="modal-section-title" style="color:var(--accent4)">☁️ Gist Sync</div>
         <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
           Sync your data across devices via a private GitHub Gist. Your token is stored locally and never sent anywhere except GitHub.
         </p>
@@ -2359,9 +2362,6 @@ function renderRoster() {
 function openSetup(section) {
   document.getElementById('setupModal').classList.add('active');
   initBrandingFields();
-  // Scroll modal to top by default
-  const mb = document.querySelector('#setupModal .modal');
-  if (mb) mb.scrollTop = 0;
   // Restore gist token
   const savedToken = localStorage.getItem('nexus_gist_token');
   const tokenEl = document.getElementById('gist-token');
