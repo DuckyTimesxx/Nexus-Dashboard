@@ -757,7 +757,7 @@ body {
     </div>
     <div class="modal-body">
       <div class="modal-section" id="section-gist">
-        <div class="modal-section-title" style="color:var(--accent4)">☁️ Gist Sync</div>
+        <div class="modal-section-title" style="color:var(--blue)">☁️ Gist Sync</div>
         <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
           Sync your data across devices via a private GitHub Gist. Your token is stored locally and never sent anywhere except GitHub.
         </p>
@@ -2359,6 +2359,9 @@ function renderRoster() {
 function openSetup(section) {
   document.getElementById('setupModal').classList.add('active');
   initBrandingFields();
+  // Scroll modal to top by default
+  const mb = document.querySelector('#setupModal .modal');
+  if (mb) mb.scrollTop = 0;
   // Restore gist token
   const savedToken = localStorage.getItem('nexus_gist_token');
   const tokenEl = document.getElementById('gist-token');
