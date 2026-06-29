@@ -702,6 +702,9 @@ body {
       <button class="btn-ghost" onclick="gistPush()" title="Push data to Gist" style="font-size:11px;padding:7px 12px">⬆</button>
       <button class="btn-ghost" onclick="gistPull()" title="Pull data from Gist" style="font-size:11px;padding:7px 12px">⬇</button>
       <div id="topbar-sync-status" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);min-width:60px;text-align:center"></div>
+      <button class="btn-ghost" onclick="gistPush()" title="Push to Gist" style="font-size:13px;padding:7px 12px">⬆</button>
+      <button class="btn-ghost" onclick="gistPull()" title="Pull from Gist" style="font-size:13px;padding:7px 12px">⬇</button>
+      <span id="topbar-sync-status" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);min-width:55px;text-align:center"></span>
       <button class="btn-ghost" id="edit-toggle-btn" onclick="toggleEditMode()" style="font-size:11px;padding:7px 14px">✏️ Edit Layout</button>
       <button class="btn-red" onclick="openSetup()" style="font-size:11px;padding:7px 14px">⚙ Setup</button>
     </div>
@@ -2362,6 +2365,9 @@ function renderRoster() {
 function openSetup(section) {
   document.getElementById('setupModal').classList.add('active');
   initBrandingFields();
+  const saved = localStorage.getItem('nexus_gist_token');
+  const el = document.getElementById('gist-token');
+  if (saved && el) el.value = saved;
   // Restore gist token
   const savedToken = localStorage.getItem('nexus_gist_token');
   const tokenEl = document.getElementById('gist-token');
@@ -3100,6 +3106,73 @@ if ('serviceWorker' in navigator) {
       .catch(e => console.log('SW failed:', e));
   });
 }
+
+// ─── GIST SYNC ────────────────────────────────────────────────────────────────
+const GIST_ID = 'd0e14cbf8e972e359690016bfb85f982';
+const GIST_FILE = 'fmlhub.json';
+
+const SYNC_KEYS = [
+  'nexus_cal_feeds','nexus_events','nexus_canvas_ical','nexus_assignments',
+  'nexus_shifts','nexus_roster_feeds','nexus_notes','nexus_todos',
+  'nexus_habits','nexus_links','nexus_tax_jobs','nexus_submitted',
+  'nexus_layout_v2','nexus_nav','nexus_title','nexus_sub',
+  'nexus_photo_delay','nexus_parser_v',
+  'pomo_count','pomo_mins','pomo_streak','pomo_date','pomo_log',
+];
+
+function getGistToken() {
+  return localStorage.getItem('nexus_gist_token') ||
+    document.getElementById('gist-token')?.value.trim() || '';
+}
+
+function setSyncStatus(msg, color='var(--text-dim)') {
+  const el = document.getElementById('topbar-sync-status');
+  if (el) { el.textContent = msg; el.style.color = color; }
+  const fb = document.getElementById('gist-feedback');
+  if (fb) { fb.textContent = msg; fb.style.color = color; }
+}
+
+async function gistPush() {
+  const token = getGistToken();
+  if (!token) { openSetup('gist'); setSyncStatus('⚠ add token', 'var(--red-soft)'); return; }
+  setSyncStatus('⏳ pushing...', 'var(--blue)');
+  const data = { version:2, pushed: new Date().toISOString() };
+  SYNC_KEYS.forEach(k => { const v=localStorage.getItem(k); if(v!==null) data[k]=v; });
+  try {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method:'PATCH',
+      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
+      body: JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(data,null,2)}}})
+    });
+    if (!res.ok) throw new Error(`${res.status}`);
+    const t = new Date().toLocaleTimeString('en-AU',{hour12:false,hour:'2-digit',minute:'2-digit'});
+    setSyncStatus(`⬆ ${t}`, 'var(--green)');
+    localStorage.setItem('nexus_gist_token', token);
+  } catch(e) { setSyncStatus('✕ push failed', 'var(--red-soft)'); }
+}
+
+async function gistPull() {
+  const token = getGistToken();
+  if (!token) { openSetup('gist'); setSyncStatus('⚠ add token', 'var(--red-soft)'); return; }
+  setSyncStatus('⏳ pulling...', 'var(--blue)');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers:{'Authorization':`token ${token}`}
+    });
+    if (!res.ok) throw new Error(`${res.status}`);
+    const gist = await res.json();
+    const content = gist.files?.[GIST_FILE]?.content;
+    if (!content) throw new Error('No data in Gist yet — push first');
+    const data = JSON.parse(content);
+    let count=0;
+    SYNC_KEYS.forEach(k => { if(data[k]!==undefined){ localStorage.setItem(k,data[k]); count++; } });
+    const t = new Date().toLocaleTimeString('en-AU',{hour12:false,hour:'2-digit',minute:'2-digit'});
+    setSyncStatus(`⬇ ${t}`, 'var(--green)');
+    localStorage.setItem('nexus_gist_token', token);
+    setTimeout(()=>location.reload(), 1000);
+  } catch(e) { setSyncStatus('✕ '+e.message, 'var(--red-soft)'); }
+}
+
 </script>
 </body>
 </html>
